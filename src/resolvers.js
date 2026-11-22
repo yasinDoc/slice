@@ -1,9 +1,11 @@
 // Resolver for the Jira issue panel (UI Kit).
-import Resolver from '@forge/resolver';
+import ResolverPkg from '@forge/resolver';
 import { panelData, reindexAll, indexIssue } from './analysis.js';
 import { markNotRelated, getSettings, saveSettings } from './store.js';
 import { getIssue } from './atlassian.js';
 
+// Works both bundled by Forge and under plain Node ESM (CommonJS interop).
+const Resolver = ResolverPkg.default ?? ResolverPkg;
 const resolver = new Resolver();
 
 const issueKey = (req) => req.payload?.issueKey || req.context?.extension?.issue?.key;

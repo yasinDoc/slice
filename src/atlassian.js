@@ -1,7 +1,7 @@
 // Thin wrappers over the Jira and Confluence REST APIs.
-import api, { route } from '@forge/api';
+import { asApp, asUser as asUserApi, route } from '@forge/api';
 
-const as = (asUser) => (asUser ? api.asUser() : api.asApp());
+const as = (asUser) => (asUser ? asUserApi() : asApp());
 
 async function ok(res, what) {
   if (!res.ok) {
@@ -51,7 +51,7 @@ const adfParagraphs = (text) => ({
 });
 
 export async function addComment(key, text) {
-  const res = await api.asApp().requestJira(route`/rest/api/3/issue/${key}/comment`, {
+  const res = await asApp().requestJira(route`/rest/api/3/issue/${key}/comment`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ body: adfParagraphs(text) }),
@@ -60,7 +60,7 @@ export async function addComment(key, text) {
 }
 
 export async function addLabel(key, label) {
-  const res = await api.asApp().requestJira(route`/rest/api/3/issue/${key}`, {
+  const res = await asApp().requestJira(route`/rest/api/3/issue/${key}`, {
     method: 'PUT',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ update: { labels: [{ add: label }] } }),
@@ -70,7 +70,7 @@ export async function addLabel(key, label) {
 
 /** Create an action item as the requesting user, so it respects their permissions. */
 export async function createIssue({ projectKey, summary, description, issueType = 'Task', labels = [] }) {
-  const res = await api.asUser().requestJira(route`/rest/api/3/issue`, {
+  const res = await asUserApi().requestJira(route`/rest/api/3/issue`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -87,7 +87,7 @@ export async function createIssue({ projectKey, summary, description, issueType 
 }
 
 export async function linkIssues(inwardKey, outwardKey, type = 'Relates') {
-  const res = await api.asUser().requestJira(route`/rest/api/3/issueLink`, {
+  const res = await asUserApi().requestJira(route`/rest/api/3/issueLink`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: { name: type }, inwardIssue: { key: inwardKey }, outwardIssue: { key: outwardKey } }),
@@ -99,8 +99,7 @@ export async function linkIssues(inwardKey, outwardKey, type = 'Relates') {
 export async function searchProtocols(terms, { limit = 5 } = {}) {
   const text = terms.map((t) => `text ~ "${String(t).replace(/"/g, '')}"`).join(' OR ');
   const cql = `type = page AND label = "protocol"${text ? ` AND (${text})` : ''}`;
-  const res = await api
-    .asUser()
+  const res = await asUserApi()
     .requestConfluence(route`/wiki/rest/api/content/search?cql=${cql}&limit=${limit}&expand=body.storage,version`);
   const data = await ok(res, 'confluence search');
   return (data.results || []).map((p) => ({

@@ -1,6 +1,6 @@
 app:
   # Replaced by `forge register` with your own app ID.
-  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000
+  id: ari:cloud:ecosystem::app/1d2c3b4a-5e6f-4a7b-8c9d-0e1f2a3b4c5d
   runtime:
     name: nodejs22.x
 
