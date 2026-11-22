@@ -1,0 +1,227 @@
+app:
+  # Replaced by `forge register` with your own app ID.
+  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000
+  runtime:
+    name: nodejs22.x
+
+modules:
+  rovo:agent:
+    - key: slice-agent
+      name: Slice
+      description: >-
+        Patient-safety learning agent. Connects near-miss reports into signals,
+        shows where the Swiss cheese holes line up, and drafts blame-free RCAs.
+      icon: resource:assets;slice-icon.svg
+      prompt: resource:agent-prompts;slice-agent.md
+      conversationStarters:
+        - What safety signals are emerging this month?
+        - Is this report part of a pattern?
+        - Draft a root cause analysis for this report
+        - Which protocols are out of date for this incident?
+      followUpPrompt: >-
+        Suggest 2-3 short follow-up questions a hospital patient-safety lead
+        might ask next, focused on system fixes rather than individuals.
+      actions:
+        - find-similar-reports
+        - get-safety-signals
+        - explain-slices
+        - find-protocols
+        - draft-rca
+        - create-safety-action
+      skills:
+        - safety-rca
+
+  rovo:skill:
+    - key: safety-rca
+      source:
+        dir: skills/safety-rca
+      dependencies:
+        tools:
+          - draft-rca
+          - find-similar-reports
+          - find-protocols
+
+  rovo:mcp:
+    - key: slice-mcp
+      name: Slice safety tools
+      tools:
+        - find-similar-reports
+        - get-safety-signals
+        - explain-slices
+        - find-protocols
+        - draft-rca
+
+  action:
+    - key: find-similar-reports
+      name: Find similar safety reports
+      function: find-similar-reports-fn
+      actionVerb: GET
+      description: >-
+        Finds earlier near-miss or incident reports similar to a given safety
+        report, with a similarity score and the reasons for each match (same
+        device, ward, drug, shift, contributing factors). Use when someone asks
+        whether a report is part of a pattern or has happened before.
+      inputs:
+        issueKey:
+          title: Issue key
+          type: string
+          required: false
+          description: Safety report key such as SAFE-12. Defaults to the open issue.
+        limit:
+          title: Limit
+          type: integer
+          required: false
+          description: Maximum number of similar reports to return (default 8).
+    - key: get-safety-signals
+      name: Get safety signals
+      function: get-safety-signals-fn
+      actionVerb: GET
+      description: >-
+        Lists recurring patterns (signals) across all safety reports, such as
+        "5 infusion pump reports involving VitaFlow 300 in Ward 6". Each comes
+        with dates, related report keys and the Swiss cheese layers with holes.
+        Use for questions about trends, hotspots, or what is emerging.
+      inputs:
+        location:
+          title: Location
+          type: string
+          required: false
+          description: Filter by location such as "ward 6", "icu" or "ed".
+        category:
+          title: Category
+          type: string
+          required: false
+          description: One of infusion, medication, specimen, identification, falls, handover, equipment, procedure, diagnostic.
+        days:
+          title: Days
+          type: integer
+          required: false
+          description: Look-back window in days (default 90).
+    - key: explain-slices
+      name: Explain Swiss cheese slices
+      function: explain-slices-fn
+      actionVerb: GET
+      description: >-
+        Maps a safety report, and the reports similar to it, onto Reason's Swiss
+        cheese layers (organisation, supervision, preconditions, unsafe acts).
+        Shows which layers had holes and which defence caught the error.
+      inputs:
+        issueKey:
+          title: Issue key
+          type: string
+          required: false
+          description: Safety report key. Defaults to the open issue.
+    - key: find-protocols
+      name: Find relevant protocols
+      function: find-protocols-fn
+      actionVerb: GET
+      description: >-
+        Finds Confluence protocols (pages labelled "protocol") relevant to a
+        safety report and flags any not reviewed in the last 24 months.
+      inputs:
+        issueKey:
+          title: Issue key
+          type: string
+          required: false
+          description: Safety report key. Defaults to the open issue.
+    - key: draft-rca
+      name: Draft root cause analysis
+      function: draft-rca-fn
+      actionVerb: GET
+      description: >-
+        Builds the evidence for a blame-free root cause analysis: a timeline of
+        similar reports, Swiss cheese layer profile, defences that held,
+        relevant protocols with staleness, and system-level fixes ranked by
+        strength (strong, intermediate, weak).
+      inputs:
+        issueKey:
+          title: Issue key
+          type: string
+          required: false
+          description: Safety report key. Defaults to the open issue.
+    - key: create-safety-action
+      name: Create safety action item
+      function: create-safety-action-fn
+      actionVerb: CREATE
+      description: >-
+        Creates a Jira action item linked to a safety report, for a system-level
+        fix the user has explicitly approved. Only call after the user confirms
+        the exact summary.
+      inputs:
+        issueKey:
+          title: Issue key
+          type: string
+          required: false
+          description: Safety report the action comes from. Defaults to the open issue.
+        summary:
+          title: Summary
+          type: string
+          required: true
+          description: Short title of the action, e.g. "Configure hard limits for heparin on VitaFlow 300".
+        description:
+          title: Description
+          type: string
+          required: false
+          description: What to change and why, citing the related reports.
+        strength:
+          title: Strength
+          type: string
+          required: false
+          description: strong, intermediate or weak (action hierarchy).
+        projectKey:
+          title: Project key
+          type: string
+          required: false
+          description: Project for the action item. Defaults to the report's project.
+
+  jira:issuePanel:
+    - key: slice-panel
+      title: Slice · safety signals
+      icon: resource:assets;slice-icon.svg
+      resource: panel
+      render: native
+      resolver:
+        function: panel-resolver-fn
+
+  trigger:
+    - key: slice-issue-events
+      function: on-issue-event-fn
+      events:
+        - avi:jira:created:issue
+        - avi:jira:updated:issue
+      filter:
+        ignoreSelf: true
+
+  function:
+    - key: panel-resolver-fn
+      handler: index.panelResolver
+    - key: on-issue-event-fn
+      handler: index.onIssueEvent
+    - key: find-similar-reports-fn
+      handler: index.findSimilarReports
+    - key: get-safety-signals-fn
+      handler: index.getSafetySignals
+    - key: explain-slices-fn
+      handler: index.explainSlices
+    - key: find-protocols-fn
+      handler: index.findProtocols
+    - key: draft-rca-fn
+      handler: index.draftRca
+    - key: create-safety-action-fn
+      handler: index.createSafetyAction
+
+resources:
+  - key: panel
+    path: src/frontend/index.jsx
+  - key: agent-prompts
+    path: prompts
+  - key: assets
+    path: assets
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - storage:app
+    - read:confluence-content.all
+    - search:confluence

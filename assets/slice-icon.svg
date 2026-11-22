@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Slice">
+  <title>Slice</title>
+  <!-- Four stacked cheese slices; the holes line up through all of them. -->
+  <g fill="#F5B83D" stroke="#B7791F" stroke-width="2">
+    <path d="M8 14 L50 8 L56 14 L14 20 Z" />
+    <path d="M8 26 L50 20 L56 26 L14 32 Z" />
+    <path d="M8 38 L50 32 L56 38 L14 44 Z" />
+    <path d="M8 50 L50 44 L56 50 L14 56 Z" />
+  </g>
+  <g fill="#7A4A0A">
+    <ellipse cx="31" cy="14" rx="3" ry="1.6" />
+    <ellipse cx="31" cy="26" rx="3" ry="1.6" />
+    <ellipse cx="31" cy="38" rx="3" ry="1.6" />
+    <ellipse cx="31" cy="50" rx="3" ry="1.6" />
+  </g>
+  <line x1="31" y1="6" x2="31" y2="60" stroke="#D93025" stroke-width="2" stroke-dasharray="3 3" />
+</svg>
