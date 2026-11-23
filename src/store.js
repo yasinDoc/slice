@@ -37,8 +37,12 @@ export async function allRecords() {
   return out;
 }
 
-export const getAlert = (signalId) => kvs.get(`alert:${encodeURIComponent(signalId)}`);
-export const saveAlert = (signalId, value) => kvs.set(`alert:${encodeURIComponent(signalId)}`, value);
+// Forge KVS keys allow only [a-zA-Z0-9:._\s-#]. Signal ids contain "|" and may contain
+// other characters (device names), so map anything else to "_".
+export const safeKey = (s) => String(s).replace(/[^a-zA-Z0-9:._\s#-]/g, '_').slice(0, 400);
+
+export const getAlert = (signalId) => kvs.get(safeKey(`alert:${signalId}`));
+export const saveAlert = (signalId, value) => kvs.set(safeKey(`alert:${signalId}`), value);
 
 export async function getFeedback(key) {
   return (await kvs.get(`feedback:${key}`)) || { notRelated: [] };

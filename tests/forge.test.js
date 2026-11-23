@@ -66,6 +66,12 @@ function fakeProduct(user) {
 }
 
 const store = new Map();
+// Same key rule as real Forge KVS, so invalid keys fail here too.
+const KEY_RE = /^(?!\s+$)[a-zA-Z0-9:._\s\-#]+$/;
+const checkKey = (k) => {
+  if (!KEY_RE.test(k)) throw new Error(`INVALID_KEY: ${k}`);
+  return k;
+};
 mock.module('@forge/api', {
   namedExports: {
     asApp: () => fakeProduct(false),
@@ -77,9 +83,9 @@ mock.module('@forge/kvs', {
   namedExports: {
     WhereConditions: { beginsWith: (v) => ({ beginsWith: v }) },
     kvs: {
-      get: async (k) => store.get(k),
-      set: async (k, v) => void store.set(k, v),
-      delete: async (k) => void store.delete(k),
+      get: async (k) => store.get(checkKey(k)),
+      set: async (k, v) => void store.set(checkKey(k), v),
+      delete: async (k) => void store.delete(checkKey(k)),
       query() {
         let prefix = '';
         const q = {
