@@ -9,6 +9,7 @@ import {
   assessProtocols,
   protocolTerms,
   buildRcaDraft,
+  DEFENCES,
 } from './engine/index.js';
 import { getIssue, searchIssues, searchProtocols, visibleKeys } from './atlassian.js';
 import { saveRecord, getRecord, allRecords, getSettings, getFeedback } from './store.js';
@@ -112,7 +113,12 @@ export async function panelData(key) {
   });
   const protocols = await protocolsFor(record);
   return {
-    record: { ...brief(record), factors: record.factors, defences: record.defences, redactions: record.redactions },
+    record: {
+      ...brief(record),
+      factors: record.factors,
+      defences: record.defences.map((id) => DEFENCES.find((d) => d.id === id)?.label || id),
+      redactions: record.redactions,
+    },
     similar: matches.map((m) => ({ ...brief(m.record), score: m.score, reasons: m.reasons })),
     signal: sigs[0] ? { title: sigs[0].title, count: sigs[0].count, keys: sigs[0].keys, harmCount: sigs[0].harmCount } : null,
     slices: sliceProfile([record, ...matches.map((m) => m.record)]),
