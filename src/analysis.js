@@ -12,7 +12,7 @@ import {
   DEFENCES,
 } from './engine/index.js';
 import { getIssue, searchIssues, searchProtocols, visibleKeys } from './atlassian.js';
-import { saveRecord, getRecord, allRecords, getSettings, getFeedback } from './store.js';
+import { saveRecord, getRecord, deleteRecord, allRecords, getSettings, getFeedback } from './store.js';
 
 export function recordFromIssue(issue) {
   return buildRecord({
@@ -37,11 +37,14 @@ export async function indexIssue(keyOrIssue) {
   return record;
 }
 
-/** Backfill every issue in the configured safety projects. */
+/** Backfill every issue in the safety projects and drop records for deleted issues. */
 export async function reindexAll() {
   const { projectKeys } = await getSettings();
   const issues = await searchIssues(`project in (${projectKeys.join(',')}) ORDER BY created ASC`, { max: 1000 });
   for (const issue of issues) await saveRecord(recordFromIssue(issue));
+  const live = new Set(issues.map((i) => i.key));
+  const stale = (await allRecords()).filter((r) => projectKeys.includes(r.projectKey) && !live.has(r.key));
+  for (const r of stale) await deleteRecord(r.key);
   return issues.length;
 }
 

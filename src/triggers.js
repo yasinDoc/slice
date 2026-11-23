@@ -1,6 +1,6 @@
 // Product event handlers: index new or edited safety reports and raise signals.
 import { indexIssue, isSafetyProject } from './analysis.js';
-import { allRecords, getSettings, getAlert, saveAlert } from './store.js';
+import { allRecords, getSettings, getAlert, saveAlert, deleteRecord } from './store.js';
 import { signalsForRecord } from './engine/index.js';
 import { addComment, addLabel } from './atlassian.js';
 
@@ -8,6 +8,10 @@ const appUrl = (key) => key; // Jira auto-links issue keys in comments.
 
 export async function onIssueEvent(event) {
   const issue = event?.issue;
+  if (event?.eventType === 'avi:jira:deleted:issue') {
+    if (issue?.key) await deleteRecord(issue.key);
+    return;
+  }
   const projectKey = issue?.fields?.project?.key || String(issue?.key || '').split('-')[0];
   if (!issue?.key || !(await isSafetyProject(projectKey))) return;
 

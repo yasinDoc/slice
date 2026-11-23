@@ -118,6 +118,13 @@ test('trigger indexes reports, and comments once when a signal appears', async (
   assert.equal(comments.filter((c) => JSON.stringify(c.body).includes('VitaFlow 300')).length, pumpComments.length);
 });
 
+test('deleted issues are removed from the index', async () => {
+  await app.onIssueEvent({ issue: { key: 'SAFE-30', fields: { project: { key: 'SAFE' } } } });
+  assert.ok(store.has('report:SAFE-30'));
+  await app.onIssueEvent({ eventType: 'avi:jira:deleted:issue', issue: { key: 'SAFE-30' } });
+  assert.ok(!store.has('report:SAFE-30'));
+});
+
 test('trigger ignores issues outside the safety project', async () => {
   const before = store.size;
   await app.onIssueEvent({ issue: { key: 'DEV-1', fields: { project: { key: 'DEV' } } } });

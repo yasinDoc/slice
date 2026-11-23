@@ -9,6 +9,7 @@
     "test": "node --experimental-test-module-mocks --test tests/*.test.js",
     "demo": "node scripts/demo.js",
     "seed": "node scripts/seed.js",
+    "dedupe": "node scripts/remove-duplicates.js",
     "lint": "forge lint"
   },
   "engines": {
