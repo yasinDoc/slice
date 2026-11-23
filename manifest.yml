@@ -1,6 +1,5 @@
 app:
-  # Replaced by `forge register` with your own app ID.
-  id: ari:cloud:ecosystem::app/1d2c3b4a-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+  id: ari:cloud:ecosystem::app/97b983e8-9b84-42a3-8273-1a9dadb4ae9f
   runtime:
     name: nodejs22.x
 
@@ -57,10 +56,9 @@ modules:
       function: find-similar-reports-fn
       actionVerb: GET
       description: >-
-        Finds earlier near-miss or incident reports similar to a given safety
-        report, with a similarity score and the reasons for each match (same
-        device, ward, drug, shift, contributing factors). Use when someone asks
-        whether a report is part of a pattern or has happened before.
+        Finds earlier near-miss reports similar to a safety report, with a score
+        and reasons (same device, ward, drug, shift, factors). Use when asked if
+        a report is part of a pattern or has happened before.
       inputs:
         issueKey:
           title: Issue key
@@ -77,10 +75,9 @@ modules:
       function: get-safety-signals-fn
       actionVerb: GET
       description: >-
-        Lists recurring patterns (signals) across all safety reports, such as
-        "5 infusion pump reports involving VitaFlow 300 in Ward 6". Each comes
-        with dates, related report keys and the Swiss cheese layers with holes.
-        Use for questions about trends, hotspots, or what is emerging.
+        Lists recurring patterns (signals) across safety reports, e.g. "5 pump
+        reports on VitaFlow 300 in Ward 6", with dates, report keys and Swiss
+        cheese layers with holes. Use for trends, hotspots or what is emerging.
       inputs:
         location:
           title: Location
@@ -91,7 +88,8 @@ modules:
           title: Category
           type: string
           required: false
-          description: One of infusion, medication, specimen, identification, falls, handover, equipment, procedure, diagnostic.
+          description: One of infusion, medication, specimen, identification, falls,
+            handover, equipment, procedure, diagnostic.
         days:
           title: Days
           type: integer
@@ -157,7 +155,8 @@ modules:
           title: Summary
           type: string
           required: true
-          description: Short title of the action, e.g. "Configure hard limits for heparin on VitaFlow 300".
+          description: Short title of the action, e.g. "Configure hard limits for heparin
+            on VitaFlow 300".
         description:
           title: Description
           type: string
