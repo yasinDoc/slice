@@ -38,6 +38,19 @@ async function call(path, body) {
   return res.json();
 }
 
+// Check the credentials first, so a bad token gives a clear message instead of
+// Jira's "project does not exist or you do not have permission".
+if (/PASTE|YOUR|xxxx/i.test(JIRA_API_TOKEN)) {
+  console.error('JIRA_API_TOKEN still holds a placeholder. Paste your real API token from https://id.atlassian.com/manage-profile/security/api-tokens');
+  process.exit(1);
+}
+const me = await fetch(`${base}/rest/api/3/myself`, { headers: { Authorization: auth, Accept: 'application/json' } });
+if (!me.ok) {
+  console.error(`Login failed (${me.status}). Check JIRA_EMAIL and JIRA_API_TOKEN.`);
+  process.exit(1);
+}
+console.log(`Signed in as ${(await me.json()).displayName}.`);
+
 const adf = (text) => ({
   type: 'doc',
   version: 1,
