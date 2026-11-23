@@ -38,8 +38,13 @@ export async function searchIssues(jql, { asUser = false, max = 500, fields = IS
 /** Of the given keys, return the ones the current user is allowed to see. */
 export async function visibleKeys(keys) {
   if (!keys.length) return new Set();
-  const issues = await searchIssues(`key in (${keys.join(',')})`, { asUser: true, fields: ['summary'], max: keys.length });
-  return new Set(issues.map((i) => i.key));
+  // Search by project, not "key in (...)": Jira rejects the whole query if any key
+  // no longer exists (e.g. a deleted report still in Slice's index).
+  const projects = [...new Set(keys.map((k) => String(k).split('-')[0]))].filter((p) => /^[A-Z][A-Z0-9_]*$/.test(p));
+  if (!projects.length) return new Set();
+  const issues = await searchIssues(`project in (${projects.join(',')})`, { asUser: true, fields: ['summary'], max: 5000 });
+  const wanted = new Set(keys);
+  return new Set(issues.map((i) => i.key).filter((k) => wanted.has(k)));
 }
 
 const adfParagraphs = (text) => ({

@@ -36,7 +36,12 @@ function fakeProduct(user) {
         const { jql } = JSON.parse(init.body);
         const keyList = jql.match(/key in \(([^)]+)\)/);
         let list = [...issues.values()];
-        if (keyList) list = list.filter((i) => keyList[1].split(',').includes(i.key));
+        if (keyList) {
+          // Like real Jira: a missing key makes the whole query fail.
+          const missing = keyList[1].split(',').find((k) => !issues.has(k));
+          if (missing) return json({ errorMessages: [`An issue with key '${missing}' does not exist`] }, 400);
+          list = list.filter((i) => keyList[1].split(',').includes(i.key));
+        }
         if (user) list = list.filter((i) => !hidden.has(i.key));
         return json({ issues: list });
       }
@@ -137,6 +142,22 @@ test('find-similar-reports respects user permissions', async () => {
   const keys = res.similar.map((s) => s.key);
   assert.ok(keys.includes('SAFE-1') && keys.includes('SAFE-3'), keys.join());
   assert.ok(!keys.includes('SAFE-2'), 'hidden issue must not be returned');
+});
+
+test('a report deleted in Jira but still indexed does not break results', async () => {
+  // Index SAFE-3, then delete it from "Jira" without telling Slice.
+  await app.onIssueEvent({ issue: { key: 'SAFE-3', fields: { project: { key: 'SAFE' } } } });
+  const saved = issues.get('SAFE-3');
+  issues.delete('SAFE-3');
+  try {
+    const res = await app.findSimilarReports({ issueKey: 'SAFE-5' });
+    assert.ok(!res.error, res.error);
+    assert.ok(!res.similar.some((s) => s.key === 'SAFE-3'));
+    const panel = await app.panelResolver({ call: { functionKey: 'getPanel', payload: { issueKey: 'SAFE-5' } }, context: {} });
+    assert.ok((panel?.body ?? panel).slices);
+  } finally {
+    issues.set('SAFE-3', saved);
+  }
 });
 
 test('get-safety-signals lists the pump signal', async () => {
