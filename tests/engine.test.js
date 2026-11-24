@@ -17,6 +17,8 @@ import {
   summarize,
   weekStart,
   buildSignalBrief,
+  actionImpact,
+  describeImpact,
 } from '../src/engine/index.js';
 
 const records = seed.reports.map((r, i) =>
@@ -158,6 +160,19 @@ test('signal brief has every section, escapes text and links reports', () => {
   assert.ok(brief.body.includes('stale · 56 months'));
   assert.equal(brief.reports, 5);
   assert.ok(brief.body.indexOf('>strong<') < brief.body.indexOf('>intermediate<'));
+});
+
+test('action impact compares equal windows before and after the first action', () => {
+  const pump = ['SAFE-1', 'SAFE-2', 'SAFE-3', 'SAFE-4', 'SAFE-5'].map((k) => byKey[k]); // Sep 2, Sep 27, Oct 14, Nov 3, Nov 19
+  const i = actionImpact(pump, '2026-10-15', '2026-11-20');
+  assert.equal(i.days, 36);
+  assert.equal(i.after, 2); // Nov 3, Nov 19
+  assert.equal(i.before, 2); // Sep 27, Oct 14 (window from Sep 9)
+  assert.equal(i.verdict, 'same');
+  assert.equal(actionImpact(pump, '2026-11-15', '2026-11-20').verdict, 'too-early');
+  assert.equal(actionImpact(pump, '2026-10-01', '2026-12-31').verdict, 'more');
+  assert.equal(actionImpact(pump, '2026-11-20', '2027-01-30').verdict, 'fewer');
+  assert.match(describeImpact(i), /2 similar reports in the 36 days since the first action, vs 2/);
 });
 
 test('weekStart returns the Monday of the week', () => {

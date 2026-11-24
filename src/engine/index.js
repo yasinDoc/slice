@@ -7,3 +7,4 @@ export { parseReviewDate, assessProtocols, protocolTerms, recommend, buildRcaDra
 export { LAYERS, CATEGORIES, FACTORS, DEFENCES } from './lexicon.js';
 export { summarize, weekStart } from './dashboard.js';
 export { buildSignalBrief, briefTitle } from './brief.js';
+export { actionImpact, describeImpact } from './impact.js';

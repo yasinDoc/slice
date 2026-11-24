@@ -21,6 +21,10 @@ export async function onIssueEvent(event) {
 
   // Event payloads can omit fields, so fetch the issue fresh.
   const record = await indexIssue(issue.key);
+  if (!record) {
+    console.log(`slice trigger: ${issue.key} is a Slice action item; not indexed`);
+    return;
+  }
   const settings = await getSettings();
   if (!settings.commentOnSignal) return;
 

@@ -39,12 +39,14 @@ Slice turns Jira (or Jira Service Management) into a patient-safety learning sys
 5. **Checks protocols** in Confluence and flags any that are overdue for review.
 6. **Recommends fixes**, ranked by the safety "action hierarchy": strong fixes like smart-pump hard
    limits come before weak ones like more training. One click turns a fix into a linked Jira action item.
-7. **Briefs the safety committee.** One click publishes a Confluence "safety signal brief" with the
+7. **Closes the loop.** Every signal tracks the action items created from it, their live Jira
+   status, and whether the pattern recurred less after the first action ("did it work?").
+8. **Briefs the safety committee.** One click publishes a Confluence "safety signal brief" with the
    evidence, the Swiss cheese layers, the defences that held, ranked fixes, overdue protocols, a timeline
    linked back to Jira, and a decision checklist.
-8. **Shows the big picture** on a project dashboard: active signals, where the holes are, top
+9. **Shows the big picture** on a project dashboard: active signals, where the holes are, top
    causes, the safeguards that held, and the weekly trend.
-9. **Investigates with Rovo.** The Slice agent answers "what's emerging?" and drafts a blame-free
+10. **Investigates with Rovo.** The Slice agent answers "what's emerging?" and drafts a blame-free
    root cause analysis. The same tools are available to any MCP client.
 
 ### How we built it
@@ -61,7 +63,7 @@ Slice turns Jira (or Jira Service Management) into a patient-safety learning sys
   reports the deployed app as eligible for Runs on Atlassian.
 - **Permission-aware.** Users only see reports they can already open in Jira. Settings and demo
   data are restricted to admins.
-- **Tests.** There are 34 tests: engine unit tests, Forge integration tests against mocked Jira,
+- **Tests.** There are 37 tests: engine unit tests, Forge integration tests against mocked Jira,
   Confluence and storage, and tests for the demo loader.
 
 ### Challenges
@@ -85,7 +87,7 @@ connecting reports, which is exactly what Atlassian's system of work is good at.
 ### What's next
 - Assign a report to Slice in Jira and have it run the whole investigation (`rovo:agentConnector`)
 - Teamwork Graph links between reports, protocols, wards and actions
-- Before/after tracking: did the fix reduce repeat reports?
+- Richer outcome tracking: harm-weighted trends and statistical significance for the before/after check
 
 ### Built with
 Atlassian Forge · UI Kit · Jira · Jira Service Management · Confluence · Rovo agents · Rovo actions ·
@@ -143,7 +145,7 @@ All data is synthetic. The devices (VitaFlow 300, LabelJet 2) are fictional.
 | 2:35 | Recommended fixes → Create action; dashboard → Publish brief → Confluence page | "Fixes ranked by strength. Hard limits beat more training. One click creates a linked task, and another publishes a brief for the safety committee in Confluence." |
 | 3:00 | Create a new report → 🧀 comment appears | "A nurse files a new near-miss. Slice recognises the pattern and says so, without blaming anyone." |
 | 3:30 | Rovo chat with the Slice agent: RCA draft | "Rovo's Slice agent drafts the root cause analysis, citing every report." |
-| 4:00 | Architecture slide | "Forge, UI Kit, Rovo agent, actions, skill and MCP. Runs on Atlassian, no patient identifiers stored, 34 tests." |
+| 4:00 | Architecture slide | "Forge, UI Kit, Rovo agent, actions, skill and MCP. Runs on Atlassian, no patient identifiers stored, 37 tests." |
 | 4:15 | Title card | "Slice. Connect the near-misses before the holes line up." |
 
 ---

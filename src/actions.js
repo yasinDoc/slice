@@ -3,6 +3,7 @@
 import { similarFor, signals, protocolsFor, rcaDraft, ensureRecord, brief, publishSignalBrief } from './analysis.js';
 import { sliceProfile, CATEGORIES } from './engine/index.js';
 import { createIssue, linkIssues, visibleKeys, getIssue } from './atlassian.js';
+import { saveActionItem } from './store.js';
 
 function issueKeyFrom(payload) {
   const key = payload?.issueKey || payload?.context?.jira?.issueKey;
@@ -112,6 +113,13 @@ export async function createSafetyAction(payload) {
       labels: ['slice-action'],
     });
     await linkIssues(key, created.key).catch((e) => console.warn('link failed', e.message));
+    await saveActionItem({
+      key: created.key,
+      from: key,
+      text: payload.summary,
+      strength: payload.strength || null,
+      createdAt: new Date().toISOString().slice(0, 10),
+    });
     return { created: created.key, linkedTo: key };
   } catch (e) {
     return fail(e);

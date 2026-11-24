@@ -13,10 +13,12 @@ import {
   summarize,
   recommend,
   buildSignalBrief,
+  actionImpact,
+  describeImpact,
 } from './engine/index.js';
 import { getIssue, searchIssues, searchProtocols, visibleKeys, siteUrl } from './atlassian.js';
 import { publishPage } from './demo.js';
-import { saveRecord, getRecord, deleteRecord, allRecords, getSettings, getFeedback } from './store.js';
+import { saveRecord, getRecord, deleteRecord, allRecords, getSettings, getFeedback, allActionItems } from './store.js';
 
 export function recordFromIssue(issue) {
   return buildRecord({
@@ -33,9 +35,20 @@ export async function isSafetyProject(projectKey) {
   return projectKeys.includes(projectKey);
 }
 
-/** Index one issue (fetching it if needed). Returns the stored record. */
+/** Slice's own action items live in the same project but are not safety reports. */
+export const ACTION_LABEL = 'slice-action';
+export const isActionItem = (issue) => (issue?.fields?.labels || []).includes(ACTION_LABEL);
+
+/**
+ * Index one issue (fetching it if needed). Returns the stored record, or null for
+ * Slice action items, which are never treated as reports.
+ */
 export async function indexIssue(keyOrIssue) {
   const issue = typeof keyOrIssue === 'string' ? await getIssue(keyOrIssue) : keyOrIssue;
+  if (isActionItem(issue)) {
+    await deleteRecord(issue.key);
+    return null;
+  }
   const record = recordFromIssue(issue);
   await saveRecord(record);
   return record;
@@ -45,15 +58,18 @@ export async function indexIssue(keyOrIssue) {
 export async function reindexAll() {
   const { projectKeys } = await getSettings();
   const issues = await searchIssues(`project in (${projectKeys.join(',')}) ORDER BY created ASC`, { max: 1000 });
-  for (const issue of issues) await saveRecord(recordFromIssue(issue));
-  const live = new Set(issues.map((i) => i.key));
+  const reports = issues.filter((i) => !isActionItem(i));
+  for (const issue of reports) await saveRecord(recordFromIssue(issue));
+  const live = new Set(reports.map((i) => i.key));
   const stale = (await allRecords()).filter((r) => projectKeys.includes(r.projectKey) && !live.has(r.key));
   for (const r of stale) await deleteRecord(r.key);
-  return issues.length;
+  return reports.length;
 }
 
 export async function ensureRecord(key) {
-  return (await getRecord(key)) || indexIssue(key);
+  const record = (await getRecord(key)) || (await indexIssue(key));
+  if (!record) throw new Error(`${key} is a Slice action item, not a safety report.`);
+  return record;
 }
 
 /** Records the current user can see. Keeps results permission-aware. */
@@ -152,15 +168,22 @@ export async function dashboardData(projectKey) {
   const all = (await allRecords()).filter((r) => r.projectKey === projectKey);
   const allowed = await visibleKeys(all.map((r) => r.key));
   const records = all.filter((r) => allowed.has(r.key));
-  return {
-    configured: true,
-    projectKey,
-    ...summarize(records, {
-      asOf: new Date().toISOString().slice(0, 10),
-      windowDays: settings.windowDays,
-      minSignalCount: settings.minSignalCount,
-    }),
-  };
+  const asOf = new Date().toISOString().slice(0, 10);
+  const summary = summarize(records, { asOf, windowDays: settings.windowDays, minSignalCount: settings.minSignalCount });
+  // Close the loop: action items created from reports in each signal, their status,
+  // and whether the pattern recurred less after the first one.
+  const items = (await allActionItems()).filter((a) => String(a.from).startsWith(`${projectKey}-`));
+  const statuses = await actionStatuses(projectKey, items);
+  for (const s of summary.signals) {
+    const mine = items.filter((a) => s.keys.includes(a.from) && statuses.has(a.key));
+    s.actions = mine.map((a) => ({ ...a, status: statuses.get(a.key).name, done: statuses.get(a.key).done }));
+    if (mine.length) {
+      const since = mine.map((a) => a.createdAt).sort()[0];
+      const impact = actionImpact(records.filter((r) => s.keys.includes(r.key)), since, asOf);
+      s.impact = { ...impact, text: describeImpact(impact) };
+    }
+  }
+  return { configured: true, projectKey, ...summary };
 }
 
 /** Publish a Confluence brief for one signal in a project. */
@@ -180,4 +203,19 @@ export async function publishSignalBrief(projectKey, signalId) {
   const brief = buildSignalBrief(signal, members, { asOf, protocols, baseUrl });
   const page = await publishPage(brief.title, brief.body);
   return { ...page, title: brief.title };
+}
+
+/** Current Jira status of Slice-created action items the user can see (key -> {name, done}). */
+async function actionStatuses(projectKey, items) {
+  const map = new Map();
+  if (!items.length) return map;
+  const issues = await searchIssues(`project in (${projectKey}) AND labels = slice-action`, {
+    asUser: true,
+    fields: ['status'],
+    max: 500,
+  });
+  for (const i of issues) {
+    map.set(i.key, { name: i.fields?.status?.name || 'Unknown', done: i.fields?.status?.statusCategory?.key === 'done' });
+  }
+  return map;
 }

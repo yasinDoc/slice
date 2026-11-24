@@ -98,6 +98,27 @@ function SignalCard({ s, projectKey }) {
           ))}
           <Text size="small" color="color.text.subtlest">{`${s.firstSeen} → ${s.lastSeen}`}</Text>
         </Inline>
+        {s.actions?.length > 0 && (
+          <Stack space="space.050">
+            <Inline space="space.100" alignBlock="center" shouldWrap>
+              <Text size="small">
+                <Strong>Actions:</Strong>
+              </Text>
+              {s.actions.map((a) => (
+                <Inline key={a.key} space="space.050" alignBlock="center">
+                  <Link href={`/browse/${a.key}`}>{a.key}</Link>
+                  <Lozenge appearance={a.done ? 'success' : 'inprogress'}>{a.status}</Lozenge>
+                  {a.strength && <Lozenge>{a.strength}</Lozenge>}
+                </Inline>
+              ))}
+            </Inline>
+            {s.impact && (
+              <Text size="small" color={s.impact.verdict === 'fewer' ? 'color.text.success' : s.impact.verdict === 'more' ? 'color.text.danger' : 'color.text.subtle'}>
+                {`Did it work? ${s.impact.text}`}
+              </Text>
+            )}
+          </Stack>
+        )}
         <Inline space="space.100" alignBlock="center" shouldWrap>
           {state.url ? (
             <Link href={state.url} openNewTab>

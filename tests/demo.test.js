@@ -21,8 +21,21 @@ const product = {
     }
     if (p === '/rest/api/3/search/jql') {
       const { jql } = JSON.parse(init.body);
-      const list = /labels = slice-demo/.test(jql) ? issues.filter((i) => i.fields.labels.includes('slice-demo')) : issues;
+      const label = jql.match(/labels = ([a-z-]+)/)?.[1];
+      const list = label ? issues.filter((i) => (i.fields.labels || []).includes(label)) : issues;
       return json({ issues: list });
+    }
+    if (p === '/rest/api/3/issue' && init.method === 'POST') {
+      const f = JSON.parse(init.body).fields;
+      const key = `SAFE-${issues.length + 1}`;
+      issues.push({ key, fields: { ...f, project: { key: 'SAFE' }, status: { name: 'To Do', statusCategory: { key: 'new' } } } });
+      return json({ key }, 201);
+    }
+    if (p === '/rest/api/3/issueLink') return json({}, 201);
+    if (/^\/rest\/api\/3\/issue\/SAFE-\d+\?/.test(p)) {
+      const k = p.match(/SAFE-\d+/)[0];
+      const i = issues.find((x) => x.key === k);
+      return i ? json(i) : json({}, 404);
     }
     if (p === '/rest/api/3/issue/bulk') {
       const { issueUpdates } = JSON.parse(init.body);
@@ -155,4 +168,33 @@ test('Rovo actions: signals include an id the publish action accepts', async () 
   assert.match(out.url, /CLINPROT/);
   const bad = await app.publishSignalBriefAction({});
   assert.match(bad.error, /signalId is required/);
+});
+
+test('dashboard shows actions created from a signal, their status and impact', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const made = await call('createAction', { issueKey: 'SAFE-5', text: 'Enforce smart-pump hard limits', strength: 'strong', addresses: 'Wrong rate programmed' });
+  assert.ok(made.created);
+  assert.ok(store.has(`action:${made.created}`));
+  const dash = await call('getDashboard', { projectKey: 'SAFE' });
+  const pump = dash.signals.find((s) => /VitaFlow 300/.test(s.title));
+  assert.equal(pump.actions.length, 1);
+  assert.equal(pump.actions[0].key, made.created);
+  assert.equal(pump.actions[0].status, 'To Do');
+  assert.equal(pump.actions[0].strength, 'strong');
+  assert.equal(pump.impact.verdict, 'too-early');
+  assert.match(pump.impact.text, /too early/);
+  const other = dash.signals.find((s) => !/VitaFlow 300/.test(s.title));
+  assert.deepEqual(other.actions, []);
+});
+
+test('Slice action items are never indexed as safety reports', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const made = await call('createAction', { issueKey: 'SAFE-9', text: 'Separate potassium strengths', strength: 'strong', addresses: 'Look-alike' });
+  await app.onIssueEvent({ issue: { key: made.created, fields: { project: { key: 'SAFE' } } } });
+  assert.ok(!store.has(`report:${made.created}`), 'trigger must skip action items');
+  await call('reindexAll', {});
+  assert.ok(!store.has(`report:${made.created}`), 're-index must skip action items');
+  const panel = await call('getPanel', { issueKey: made.created });
+  assert.equal(panel.actionItem, true);
+  assert.equal(panel.from, 'SAFE-9');
 });

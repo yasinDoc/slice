@@ -77,3 +77,20 @@ export async function markNotRelated(key, otherKey) {
   await kvs.set(`feedback:${key}`, fb);
   return fb;
 }
+
+/** Action items Slice created: { key, from, text, strength, createdAt }. */
+export const saveActionItem = (item) => kvs.set(`action:${item.key}`, item);
+export const getActionItem = (key) => kvs.get(`action:${key}`);
+
+export async function allActionItems() {
+  const out = [];
+  let cursor;
+  do {
+    let q = kvs.query().where('key', WhereConditions.beginsWith('action:')).limit(100);
+    if (cursor) q = q.cursor(cursor);
+    const page = await q.getMany();
+    for (const r of page.results || []) out.push(r.value);
+    cursor = page.nextCursor;
+  } while (cursor);
+  return out;
+}

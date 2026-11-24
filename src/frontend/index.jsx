@@ -100,6 +100,17 @@ function App() {
       </SectionMessage>
     );
 
+  if (data.actionItem)
+    return (
+      <SectionMessage appearance="information" title="Slice action item">
+        <Text>
+          {data.from ? `This is a ${data.strength || ''} system fix raised from safety report ${data.from}. ` : 'This is a system fix raised by Slice. '}
+          It is tracked on the Slice safety signals dashboard, which shows whether the pattern recurs less once it's done.
+        </Text>
+        {data.from && <Link href={`/browse/${data.from}`}>{`Open ${data.from}`}</Link>}
+      </SectionMessage>
+    );
+
   const { record, similar, signal, slices, ownSlices, protocols } = data;
   const recommendations = data.recommendations || [];
   const stale = protocols.filter((p) => p.stale);

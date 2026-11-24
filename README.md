@@ -36,6 +36,7 @@ Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonu
 | 🛠️ **Recommends fixes** | System-level fixes ranked by the safety action hierarchy (strong → intermediate → weak) |
 | ✅ **Turns it into work** | One click (after a human agrees) creates a linked Jira action item |
 | 📊 **Shows the big picture** | A project dashboard: active signals, Swiss cheese profile, top causes, the slices that held, weekly trend |
+| 🔁 **Closes the loop** | Each signal tracks the action items created from it, their live Jira status, and *did it work?*: reports in the pattern since the first action vs the same period before |
 | 📝 **Briefs the committee** | One click publishes a Confluence **safety signal brief**: layers with holes, defences that held, ranked fixes, stale protocols, report timeline and decision checklist |
 | 🔔 **Alerts in context** | When a new report joins a pattern, Slice comments on it once and labels it `slice-signal` |
 
@@ -66,7 +67,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the architecture, data model and scorin
 ```bash
 npm install
 npm run demo        # signals plus a sample RCA from 34 synthetic reports
-npm test            # 34 tests: engine, Forge integration, demo loader and Confluence briefs
+npm test            # 37 tests: engine, Forge integration, demo loader, briefs and action tracking
 ```
 
 ## Install on your Atlassian site

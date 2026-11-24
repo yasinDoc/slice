@@ -1,7 +1,7 @@
 // Resolver for the Jira issue panel (UI Kit).
 import ResolverPkg from '@forge/resolver';
-import { panelData, reindexAll, indexIssue, dashboardData, publishSignalBrief } from './analysis.js';
-import { markNotRelated, getSettings, saveSettings, validateSettings } from './store.js';
+import { panelData, reindexAll, indexIssue, dashboardData, publishSignalBrief, isActionItem } from './analysis.js';
+import { markNotRelated, getSettings, saveSettings, validateSettings, getActionItem } from './store.js';
 import { getIssue, isJiraAdmin } from './atlassian.js';
 import { createSafetyAction } from './actions.js';
 import { loadDemoReports, loadDemoProtocols } from './demo.js';
@@ -14,7 +14,11 @@ const issueKey = (req) => req.payload?.issueKey || req.context?.extension?.issue
 
 resolver.define('getPanel', async (req) => {
   const key = issueKey(req);
-  await getIssue(key, { asUser: true }); // permission check
+  const issue = await getIssue(key, { asUser: true }); // permission check
+  if (isActionItem(issue)) {
+    const item = await getActionItem(key);
+    return { actionItem: true, from: item?.from || null, strength: item?.strength || null };
+  }
   return panelData(key);
 });
 

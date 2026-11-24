@@ -71,6 +71,7 @@ with `node --test`.
 | `report:<ISSUE-KEY>` | `{ key, summary, text, eventDate, category, location, device, deviceModel, drug, shift, outcome, factors[], defences[], tokens[], redactions }`, all redacted |
 | `alert:<signalId>` | `{ keys[], count, at }`: reports already alerted for this signal (one comment per report) |
 | `settings` | `{ projectKeys: ["SAFE"], commentOnSignal: true, minSignalCount: 3, windowDays: 90 }` |
+| `action:<ISSUE-KEY>` | `{ key, from, text, strength, createdAt }`: action items Slice created (excluded from indexing via the `slice-action` label) |
 | `feedback:<ISSUE-KEY>` | `{ helpful, notRelated[] }`, used to suppress wrong matches |
 
 ### Similarity
@@ -121,5 +122,5 @@ Slice always suggests at least one strong or intermediate action before any weak
 - [ ] Assignable investigator (`rovo:agentConnector`, which needs a remote A2A service)
 - [x] Confluence "safety signal brief" per signal (dashboard button and Rovo action)
 - [ ] Teamwork Graph objects for reports and protocols
-- [ ] Before/after view: did a fix reduce repeat reports in that pattern?
+- [x] Action tracking per signal with live status and a before/after recurrence check
 - [ ] Feedback-driven tuning of similarity weights
