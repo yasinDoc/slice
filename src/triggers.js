@@ -8,12 +8,16 @@ const appUrl = (key) => key; // Jira auto-links issue keys in comments.
 
 export async function onIssueEvent(event) {
   const issue = event?.issue;
+  console.log(`slice trigger: ${event?.eventType} ${issue?.key}`);
   if (event?.eventType === 'avi:jira:deleted:issue') {
     if (issue?.key) await deleteRecord(issue.key);
     return;
   }
   const projectKey = issue?.fields?.project?.key || String(issue?.key || '').split('-')[0];
-  if (!issue?.key || !(await isSafetyProject(projectKey))) return;
+  if (!issue?.key || !(await isSafetyProject(projectKey))) {
+    console.log(`slice trigger: skipped ${issue?.key} (project ${projectKey} not a safety project)`);
+    return;
+  }
 
   // Event payloads can omit fields, so fetch the issue fresh.
   const record = await indexIssue(issue.key);
@@ -26,12 +30,25 @@ export async function onIssueEvent(event) {
     minSignalCount: settings.minSignalCount,
     asOf: new Date().toISOString().slice(0, 10),
   });
-  if (!signal) return;
+  if (!signal) {
+    console.log(`slice trigger: ${record.key} indexed, no signal`);
+    return;
+  }
 
-  // Comment once per signal, and again only when it grows.
-  const prev = await getAlert(signal.id);
-  if (prev && prev.count >= signal.count) return;
-  await saveAlert(signal.id, { count: signal.count, at: new Date().toISOString() });
+  // One comment per report per signal. Tracking keys (not a count) keeps this right
+  // when reports are deleted or events are retried.
+  const prev = (await getAlert(signal.id)) || {};
+  const alerted = Array.isArray(prev.keys) ? prev.keys : [];
+  if (alerted.includes(record.key)) {
+    console.log(`slice trigger: ${record.key} already alerted for ${signal.id}`);
+    return;
+  }
+  await saveAlert(signal.id, {
+    keys: [...alerted.filter((k) => signal.keys.includes(k)), record.key],
+    count: signal.count,
+    at: new Date().toISOString(),
+  });
+  console.log(`slice trigger: alerting ${record.key} for ${signal.id} (${signal.count} reports)`);
 
   const holes = signal.slices
     .filter((l) => l.holes > 0)

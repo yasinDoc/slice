@@ -123,6 +123,17 @@ test('trigger indexes reports, and comments once when a signal appears', async (
   assert.equal(comments.filter((c) => JSON.stringify(c.body).includes('VitaFlow 300')).length, pumpComments.length);
 });
 
+test('a signal that shrank after deletions still alerts new reports', async () => {
+  // Simulate a stale alert recorded when duplicates made the signal bigger.
+  const alertKey = [...store.keys()].find((k) => k.startsWith('alert:') && k.includes('ward-6'));
+  store.set(alertKey, { count: 10, at: '2026-11-23T00:00:00Z' });
+  const before = comments.length;
+  await app.onIssueEvent({ issue: { key: 'SAFE-4', fields: { project: { key: 'SAFE' } } } });
+  assert.equal(comments.length, before + 1, 'old count-only alert must not block a new report');
+  await app.onIssueEvent({ issue: { key: 'SAFE-4', fields: { project: { key: 'SAFE' } } } });
+  assert.equal(comments.length, before + 1, 'same report is not alerted twice');
+});
+
 test('deleted issues are removed from the index', async () => {
   await app.onIssueEvent({ issue: { key: 'SAFE-30', fields: { project: { key: 'SAFE' } } } });
   assert.ok(store.has('report:SAFE-30'));
