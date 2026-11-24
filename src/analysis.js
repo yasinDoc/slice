@@ -12,8 +12,10 @@ import {
   DEFENCES,
   summarize,
   recommend,
+  buildSignalBrief,
 } from './engine/index.js';
-import { getIssue, searchIssues, searchProtocols, visibleKeys } from './atlassian.js';
+import { getIssue, searchIssues, searchProtocols, visibleKeys, siteUrl } from './atlassian.js';
+import { publishPage } from './demo.js';
 import { saveRecord, getRecord, deleteRecord, allRecords, getSettings, getFeedback } from './store.js';
 
 export function recordFromIssue(issue) {
@@ -159,4 +161,23 @@ export async function dashboardData(projectKey) {
       minSignalCount: settings.minSignalCount,
     }),
   };
+}
+
+/** Publish a Confluence brief for one signal in a project. */
+export async function publishSignalBrief(projectKey, signalId) {
+  const settings = await getSettings();
+  const all = (await allRecords()).filter((r) => r.projectKey === projectKey);
+  const allowed = await visibleKeys(all.map((r) => r.key));
+  const records = all.filter((r) => allowed.has(r.key));
+  const asOf = new Date().toISOString().slice(0, 10);
+  const signal = detectSignals(records, { asOf, windowDays: settings.windowDays, minSignalCount: settings.minSignalCount }).find(
+    (s) => s.id === signalId
+  );
+  if (!signal) throw new Error('That signal is no longer active. Refresh the dashboard.');
+  const members = records.filter((r) => signal.keys.includes(r.key));
+  const protocols = await protocolsFor(members[members.length - 1]);
+  const baseUrl = await siteUrl();
+  const brief = buildSignalBrief(signal, members, { asOf, protocols, baseUrl });
+  const page = await publishPage(brief.title, brief.body);
+  return { ...page, title: brief.title };
 }

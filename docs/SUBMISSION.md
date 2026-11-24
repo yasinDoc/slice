@@ -13,7 +13,7 @@ Everything needed for the Devpost form, the demo video and the judges' test run.
 **Category:** Apps for Specialized Industries (healthcare)
 
 **Bonus prizes:**
-- **Best Agents:** `rovo:agent` "Slice", six reusable `action` modules, and a reusable `rovo:skill` (safety-rca)
+- **Best Agents:** `rovo:agent` "Slice", seven reusable `action` modules, and a reusable `rovo:skill` (safety-rca)
 - **Best app with Atlassian MCP:** `rovo:mcp` exposes the five read-only safety tools to external MCP clients
 - *(Optional)* **Marketplace:** add the listing or review-ticket link here if you submit it
 
@@ -39,14 +39,17 @@ Slice turns Jira (or Jira Service Management) into a patient-safety learning sys
 5. **Checks protocols** in Confluence and flags any that are overdue for review.
 6. **Recommends fixes**, ranked by the safety "action hierarchy": strong fixes like smart-pump hard
    limits come before weak ones like more training. One click turns a fix into a linked Jira action item.
-7. **Shows the big picture** on a project dashboard: active signals, where the holes are, top
+7. **Briefs the safety committee.** One click publishes a Confluence "safety signal brief" with the
+   evidence, the Swiss cheese layers, the defences that held, ranked fixes, overdue protocols, a timeline
+   linked back to Jira, and a decision checklist.
+8. **Shows the big picture** on a project dashboard: active signals, where the holes are, top
    causes, the safeguards that held, and the weekly trend.
-8. **Investigates with Rovo.** The Slice agent answers "what's emerging?" and drafts a blame-free
+9. **Investigates with Rovo.** The Slice agent answers "what's emerging?" and drafts a blame-free
    root cause analysis. The same tools are available to any MCP client.
 
 ### How we built it
 - **Forge** app, written in JavaScript with UI Kit. Modules: `jira:issuePanel`, `jira:projectPage`,
-  `jira:adminPage`, `trigger` (issue created, updated, deleted), `rovo:agent`, `action` ×6,
+  `jira:adminPage`, `trigger` (issue created, updated, deleted), `rovo:agent`, `action` ×7,
   `rovo:skill`, `rovo:mcp`.
 - **A deterministic, explainable engine** (`src/engine/`): a safety-domain lexicon, a redaction
   layer, weighted similarity (category, device, location, drug, factors, shift, text), signal
@@ -58,7 +61,7 @@ Slice turns Jira (or Jira Service Management) into a patient-safety learning sys
   reports the deployed app as eligible for Runs on Atlassian.
 - **Permission-aware.** Users only see reports they can already open in Jira. Settings and demo
   data are restricted to admins.
-- **Tests.** There are 31 tests: engine unit tests, Forge integration tests against mocked Jira,
+- **Tests.** There are 34 tests: engine unit tests, Forge integration tests against mocked Jira,
   Confluence and storage, and tests for the demo loader.
 
 ### Challenges
@@ -83,7 +86,6 @@ connecting reports, which is exactly what Atlassian's system of work is good at.
 - Assign a report to Slice in Jira and have it run the whole investigation (`rovo:agentConnector`)
 - Teamwork Graph links between reports, protocols, wards and actions
 - Before/after tracking: did the fix reduce repeat reports?
-- A Confluence "safety signal" page generated for each signal
 
 ### Built with
 Atlassian Forge · UI Kit · Jira · Jira Service Management · Confluence · Rovo agents · Rovo actions ·
@@ -94,7 +96,7 @@ Rovo skills · Rovo MCP · Forge KVS · JavaScript
 ## 2. How Slice meets the main technology requirement
 Slice is a Forge app that integrates with **Jira / Jira Service Management** (issue panel, project
 page, admin page, issue triggers, creating linked action items), **Confluence** (protocol search
-and staleness, demo protocol space), and **Rovo** (`rovo:agent`, six `action` modules, `rovo:skill`,
+and staleness, demo protocol space), and **Rovo** (`rovo:agent`, seven `action` modules, `rovo:skill`,
 `rovo:mcp`).
 
 ---
@@ -110,14 +112,16 @@ and staleness, demo protocol space), and **Rovo** (`rovo:agent`, six `action` mo
 5. Open **SAFE-5** → the **Slice · safety signals** panel shows the pump signal, the four layers,
    recommended fixes (try **Create action**), similar reports with reasons, and
    *"Infusion pump programming… stale · 56 months"*.
-6. Create a report in SAFE with summary *"VitaFlow 300 rate entered wrong again"* and description
+6. On the dashboard, click **Publish brief to Confluence** on the pump signal and open the link:
+   a committee-ready page with layers, defences, ranked fixes, the stale protocol and a linked timeline.
+7. Create a report in SAFE with summary *"VitaFlow 300 rate entered wrong again"* and description
    *"Ward 6, night shift 03:00. Heparin rate entered 10x too high on the VitaFlow 300 keypad, was
    interrupted. Second nurse double-checked and caught it."*. Within 1–3 minutes Slice comments
    🧀 on it and adds the `slice-signal` label.
-7. In **Rovo chat**, choose the **Slice** agent:
+8. In **Rovo chat**, choose the **Slice** agent:
    - *"What safety signals are emerging this month?"*
    - *"Draft an RCA for SAFE-5"*
-8. **MCP (optional):** an admin enables external MCP access for Slice. Then connect an MCP client
+9. **MCP (optional):** an admin enables external MCP access for Slice. Then connect an MCP client
    to `https://mcp.atlassian.com/forge/97b983e8-9b84-42a3-8273-1a9dadb4ae9f` and call
    `get-safety-signals`.
 
@@ -136,10 +140,10 @@ All data is synthetic. The devices (VitaFlow 300, LabelJet 2) are fictional.
 | 1:30 | Swiss cheese tab and charts | "Preconditions failed in every one: a confusing keypad, interruptions, fatigue. And here's what held: the pump's dose limit." |
 | 2:00 | SAFE-5 panel | "On the report itself: the signal, the layers, similar reports with the reason for each match…" |
 | 2:20 | Protocol "stale · 56 months" | "…and the infusion protocol that hasn't been reviewed in 56 months." |
-| 2:35 | Recommended fixes → Create action | "Fixes ranked by strength. Hard limits beat more training. One click creates a linked task." |
+| 2:35 | Recommended fixes → Create action; dashboard → Publish brief → Confluence page | "Fixes ranked by strength. Hard limits beat more training. One click creates a linked task, and another publishes a brief for the safety committee in Confluence." |
 | 3:00 | Create a new report → 🧀 comment appears | "A nurse files a new near-miss. Slice recognises the pattern and says so, without blaming anyone." |
 | 3:30 | Rovo chat with the Slice agent: RCA draft | "Rovo's Slice agent drafts the root cause analysis, citing every report." |
-| 4:00 | Architecture slide | "Forge, UI Kit, Rovo agent, actions, skill and MCP. Runs on Atlassian, no patient identifiers stored, 31 tests." |
+| 4:00 | Architecture slide | "Forge, UI Kit, Rovo agent, actions, skill and MCP. Runs on Atlassian, no patient identifiers stored, 34 tests." |
 | 4:15 | Title card | "Slice. Connect the near-misses before the holes line up." |
 
 ---

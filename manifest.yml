@@ -27,6 +27,7 @@ modules:
         - find-protocols
         - draft-rca
         - create-safety-action
+        - publish-signal-brief
       skills:
         - safety-rca
 
@@ -173,6 +174,26 @@ modules:
           required: false
           description: Project for the action item. Defaults to the report's project.
 
+    - key: publish-signal-brief
+      name: Publish signal brief
+      function: publish-signal-brief-fn
+      actionVerb: CREATE
+      description: >-
+        Publishes a Confluence brief for one safety signal (layers with holes,
+        defences that held, ranked fixes, stale protocols, report timeline).
+        Only call after the user asks for it. Needs signalId from get-safety-signals.
+      inputs:
+        signalId:
+          title: Signal ID
+          type: string
+          required: true
+          description: The signalId returned by get-safety-signals.
+        projectKey:
+          title: Project key
+          type: string
+          required: false
+          description: Safety project key, e.g. SAFE (from get-safety-signals).
+
   jira:issuePanel:
     - key: slice-panel
       title: Slice · safety signals
@@ -228,6 +249,8 @@ modules:
       handler: index.draftRca
     - key: create-safety-action-fn
       handler: index.createSafetyAction
+    - key: publish-signal-brief-fn
+      handler: index.publishSignalBriefAction
 
 resources:
   - key: panel

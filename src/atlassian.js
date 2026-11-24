@@ -47,6 +47,13 @@ export async function visibleKeys(keys) {
   return new Set(issues.map((i) => i.key).filter((k) => wanted.has(k)));
 }
 
+/** The Jira site's base URL, e.g. https://example.atlassian.net (for links in Confluence). */
+export async function siteUrl() {
+  const res = await asApp().requestJira(route`/rest/api/3/serverInfo`);
+  if (!res.ok) return '';
+  return ((await res.json()).baseUrl || '').replace(/\/$/, '');
+}
+
 /** True if the current user is a Jira administrator. */
 export async function isJiraAdmin() {
   const res = await asUserApi().requestJira(route`/rest/api/3/mypermissions?permissions=ADMINISTER`);

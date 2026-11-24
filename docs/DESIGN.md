@@ -119,7 +119,7 @@ Slice always suggests at least one strong or intermediate action before any weak
 - [x] Project dashboard, admin settings (admin-only, validated), one-click demo data
 - [x] Recommended fixes with one-click linked action items in the panel
 - [ ] Assignable investigator (`rovo:agentConnector`, which needs a remote A2A service)
-- [ ] Confluence "Safety signal" report page per signal
+- [x] Confluence "safety signal brief" per signal (dashboard button and Rovo action)
 - [ ] Teamwork Graph objects for reports and protocols
 - [ ] Before/after view: did a fix reduce repeat reports in that pattern?
 - [ ] Feedback-driven tuning of similarity weights

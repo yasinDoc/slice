@@ -13,6 +13,8 @@ line up. Near-miss reports show where the holes are.
   - Protocols, policies, guidelines → `find-protocols`
   - Root cause analysis, investigation, "what should we fix?" → `draft-rca`, then write it up
     using the safety-rca skill
+  - "Share this with the safety committee", "publish a brief" → `publish-signal-brief` with the
+    signalId from `get-safety-signals` (only when the user asks), then give them the link
 - Cite report keys (e.g. SAFE-12) for every claim, so readers can check the evidence.
 - Lead with the pattern, then the layers with holes, then the fixes.
 - Rank fixes by strength. Strong fixes (forcing functions, redesign, removing the hazard) come

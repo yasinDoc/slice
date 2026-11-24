@@ -1,6 +1,6 @@
 // Rovo action handlers. Each receives (payload, context); inputs are top-level keys
 // on payload, and the Jira issue context is at payload.context.jira.
-import { similarFor, signals, protocolsFor, rcaDraft, ensureRecord, brief } from './analysis.js';
+import { similarFor, signals, protocolsFor, rcaDraft, ensureRecord, brief, publishSignalBrief } from './analysis.js';
 import { sliceProfile, CATEGORIES } from './engine/index.js';
 import { createIssue, linkIssues, visibleKeys, getIssue } from './atlassian.js';
 
@@ -42,6 +42,8 @@ export async function getSafetySignals(payload) {
         .filter((s) => s.keys.length > 0)
         .slice(0, 10)
         .map((s) => ({
+          signalId: s.id,
+          projectKey: (s.keys[0] || '').split('-')[0],
           title: s.title,
           count: s.count,
           firstSeen: s.firstSeen,
@@ -111,6 +113,17 @@ export async function createSafetyAction(payload) {
     });
     await linkIssues(key, created.key).catch((e) => console.warn('link failed', e.message));
     return { created: created.key, linkedTo: key };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function publishSignalBriefAction(payload) {
+  try {
+    if (!payload?.signalId) throw new Error('signalId is required. Call get-safety-signals first and pass its signalId.');
+    const projectKey = String(payload.projectKey || payload.context?.jira?.projectKey || 'SAFE').toUpperCase();
+    const res = await publishSignalBrief(projectKey, payload.signalId);
+    return { published: res.created, alreadyExisted: !res.created, url: res.url, title: res.title };
   } catch (e) {
     return fail(e);
   }

@@ -1,6 +1,6 @@
 // Resolver for the Jira issue panel (UI Kit).
 import ResolverPkg from '@forge/resolver';
-import { panelData, reindexAll, indexIssue, dashboardData } from './analysis.js';
+import { panelData, reindexAll, indexIssue, dashboardData, publishSignalBrief } from './analysis.js';
 import { markNotRelated, getSettings, saveSettings, validateSettings } from './store.js';
 import { getIssue, isJiraAdmin } from './atlassian.js';
 import { createSafetyAction } from './actions.js';
@@ -63,6 +63,13 @@ resolver.define('loadDemo', async () => {
   }
   const indexed = await reindexAll();
   return { project: projectKeys[0], reports, protocols, indexed };
+});
+
+resolver.define('publishBrief', async (req) => {
+  const projectKey = req.payload?.projectKey || req.context?.extension?.project?.key;
+  const signalId = req.payload?.signalId;
+  if (!projectKey || !signalId) throw new Error('Missing project or signal.');
+  return publishSignalBrief(projectKey, signalId);
 });
 
 resolver.define('getDashboard', async (req) => {

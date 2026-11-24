@@ -6,3 +6,4 @@ export * from './signals.js';
 export { parseReviewDate, assessProtocols, protocolTerms, recommend, buildRcaDraft, monthsSince, STALE_MONTHS } from './rca.js';
 export { LAYERS, CATEGORIES, FACTORS, DEFENCES } from './lexicon.js';
 export { summarize, weekStart } from './dashboard.js';
+export { buildSignalBrief, briefTitle } from './brief.js';

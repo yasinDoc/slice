@@ -8,4 +8,5 @@ export {
   findProtocols,
   draftRca,
   createSafetyAction,
+  publishSignalBriefAction,
 } from './actions.js';

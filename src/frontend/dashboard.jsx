@@ -59,7 +59,17 @@ function Stat({ label, value, hint, appearance }) {
   );
 }
 
-function SignalCard({ s }) {
+function SignalCard({ s, projectKey }) {
+  const [state, setState] = useState({ busy: false });
+  const publish = async () => {
+    setState({ busy: true });
+    try {
+      const res = await invoke('publishBrief', { projectKey, signalId: s.id });
+      setState({ busy: false, url: res.url, created: res.created });
+    } catch (e) {
+      setState({ busy: false, error: e.message || String(e) });
+    }
+  };
   return (
     <Box xcss={card}>
       <Stack space="space.100">
@@ -87,6 +97,18 @@ function SignalCard({ s }) {
             </Link>
           ))}
           <Text size="small" color="color.text.subtlest">{`${s.firstSeen} → ${s.lastSeen}`}</Text>
+        </Inline>
+        <Inline space="space.100" alignBlock="center" shouldWrap>
+          {state.url ? (
+            <Link href={state.url} openNewTab>
+              {state.created ? 'Brief published in Confluence ↗' : 'Open existing brief in Confluence ↗'}
+            </Link>
+          ) : (
+            <Button spacing="compact" onClick={publish} isDisabled={state.busy}>
+              {state.busy ? 'Publishing…' : 'Publish brief to Confluence'}
+            </Button>
+          )}
+          {state.error && <Text color="color.text.danger">{state.error}</Text>}
         </Inline>
       </Stack>
     </Box>
@@ -185,7 +207,7 @@ function App() {
             {data.signals.length ? (
               <Stack space="space.200">
                 {data.signals.map((s) => (
-                  <SignalCard key={s.id} s={s} />
+                  <SignalCard key={s.id} s={s} projectKey={data.projectKey} />
                 ))}
                 <Text size="small" color="color.text.subtle">
                   Open any report and ask the Slice agent in Rovo to "draft an RCA" for the full investigation.

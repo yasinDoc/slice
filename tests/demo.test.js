@@ -15,6 +15,7 @@ const product = {
   async requestJira(path, init = {}) {
     const p = String(path);
     if (p.startsWith('/rest/api/3/mypermissions')) return json({ permissions: { ADMINISTER: { havePermission: isAdmin } } });
+    if (p === '/rest/api/3/serverInfo') return json({ baseUrl: 'https://site.atlassian.net' });
     if (p === '/rest/api/3/project/SAFE') {
       return json({ issueTypes: [{ id: '1', name: 'Sub-task', subtask: true }, { id: '2', name: 'Task', subtask: false }] });
     }
@@ -44,13 +45,19 @@ const product = {
       spaceExists = true;
       return json({ id: '42', key: 'CLINPROT' });
     }
-    if (p.startsWith('/wiki/api/v2/spaces/42/pages')) return json({ results: pages.map((x) => ({ title: x.title })) });
+    if (p.startsWith('/wiki/api/v2/spaces/42/pages')) {
+      const title = new URLSearchParams(p.split('?')[1]).get('title');
+      const list = pages.filter((x) => !title || x.title === title).map((x) => ({ title: x.title, _links: { webui: `/spaces/CLINPROT/pages/${x.id}` } }));
+      return json({ results: list, _links: { base: 'https://site.atlassian.net/wiki' } });
+    }
     if (p === '/wiki/api/v2/pages' && init.method === 'POST') {
       const body = JSON.parse(init.body);
       assert.equal(body.spaceId, '42');
-      pages.push(body);
-      return json({ id: String(pages.length) });
+      const id = String(pages.length + 1);
+      pages.push({ ...body, id });
+      return json({ id, _links: { base: 'https://site.atlassian.net/wiki', webui: `/spaces/CLINPROT/pages/${id}` } });
     }
+    if (p.startsWith('/wiki/rest/api/content/search')) return json({ results: [] });
     if (/^\/wiki\/rest\/api\/content\/\d+\/label$/.test(p)) {
       labels.push(JSON.parse(init.body)[0].name);
       return json({ results: [] });
@@ -118,4 +125,34 @@ test('running it again creates nothing new', async () => {
   assert.equal(res.protocols.created, 0);
   assert.equal(issues.length, seed.reports.length);
   assert.equal(pages.length, seed.protocols.length);
+});
+
+test('publishes a signal brief to Confluence once, then links to it', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const dash = await call('getDashboard', { projectKey: 'SAFE' });
+  const pump = dash.signals.find((s) => /VitaFlow 300/.test(s.title));
+  assert.ok(pump, JSON.stringify(dash.signals.map((s) => s.title)));
+  const before = pages.length;
+  const first = await call('publishBrief', { projectKey: 'SAFE', signalId: pump.id });
+  assert.equal(first.created, true);
+  assert.match(first.url, /^https:\/\/site\.atlassian\.net\/wiki\/spaces\/CLINPROT\/pages\/\d+$/);
+  const page = pages.at(-1);
+  assert.match(page.title, /^Safety signal brief: .*VitaFlow 300/);
+  assert.ok(page.body.value.includes('https://site.atlassian.net/browse/SAFE-1'));
+  const again = await call('publishBrief', { projectKey: 'SAFE', signalId: pump.id });
+  assert.equal(again.created, false);
+  assert.equal(pages.length, before + 1);
+  await assert.rejects(call('publishBrief', { projectKey: 'SAFE', signalId: 'nope' }), /no longer active/);
+});
+
+test('Rovo actions: signals include an id the publish action accepts', async () => {
+  const res = await app.getSafetySignals({});
+  const pump = res.signals.find((s) => /VitaFlow 300/.test(s.title));
+  assert.ok(pump.signalId && pump.projectKey === 'SAFE', JSON.stringify(pump));
+  const out = await app.publishSignalBriefAction({ signalId: pump.signalId, projectKey: pump.projectKey });
+  assert.ok(!out.error, out.error);
+  assert.equal(out.alreadyExisted, true, 'brief from the previous test is reused');
+  assert.match(out.url, /CLINPROT/);
+  const bad = await app.publishSignalBriefAction({});
+  assert.match(bad.error, /signalId is required/);
 });

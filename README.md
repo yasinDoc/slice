@@ -36,6 +36,7 @@ Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonu
 | 🛠️ **Recommends fixes** | System-level fixes ranked by the safety action hierarchy (strong → intermediate → weak) |
 | ✅ **Turns it into work** | One click (after a human agrees) creates a linked Jira action item |
 | 📊 **Shows the big picture** | A project dashboard: active signals, Swiss cheese profile, top causes, the slices that held, weekly trend |
+| 📝 **Briefs the committee** | One click publishes a Confluence **safety signal brief**: layers with holes, defences that held, ranked fixes, stale protocols, report timeline and decision checklist |
 | 🔔 **Alerts in context** | When a new report joins a pattern, Slice comments on it once and labels it `slice-signal` |
 
 ### Principles
@@ -50,11 +51,11 @@ Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonu
 | Module | Purpose |
 |---|---|
 | `rovo:agent` **Slice** | Conversational safety analyst |
-| `action` × 6 | `find-similar-reports`, `get-safety-signals`, `explain-slices`, `find-protocols`, `draft-rca`, `create-safety-action` |
+| `action` × 7 | `find-similar-reports`, `get-safety-signals`, `explain-slices`, `find-protocols`, `draft-rca`, `create-safety-action`, `publish-signal-brief` |
 | `rovo:skill` **safety-rca** | Reusable RCA write-up method that other agents can use |
 | `rovo:mcp` | The five read-only tools, for Claude, Cursor and other MCP clients |
 | `jira:issuePanel` (UI Kit) | Signal banner, Swiss cheese layers, recommended fixes with one-click action items, similar reports, protocol staleness |
-| `jira:projectPage` (UI Kit) | **Slice safety signals** dashboard: stat tiles, signal cards, charts, latest reports |
+| `jira:projectPage` (UI Kit) | **Slice safety signals** dashboard: stat tiles, signal cards (with **Publish brief to Confluence**), charts, latest reports |
 | `jira:adminPage` (UI Kit) | Settings (safety projects, signal threshold, look-back window, comments), admin-only, plus **Load demo data** |
 | `trigger` | Indexes reports on create, update and delete; comments once per report per signal |
 
@@ -65,7 +66,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the architecture, data model and scorin
 ```bash
 npm install
 npm run demo        # signals plus a sample RCA from 34 synthetic reports
-npm test            # 31 tests: engine, Forge integration and demo loader
+npm test            # 34 tests: engine, Forge integration, demo loader and Confluence briefs
 ```
 
 ## Install on your Atlassian site

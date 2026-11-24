@@ -16,6 +16,7 @@ import {
   detectDevice,
   summarize,
   weekStart,
+  buildSignalBrief,
 } from '../src/engine/index.js';
 
 const records = seed.reports.map((r, i) =>
@@ -140,6 +141,23 @@ test('dashboard summary counts signals, layers, factors and weeks', () => {
   assert.equal(s.weekly.reduce((n, w) => n + w.count, 0), records.length);
   assert.equal(s.latest[0].date, '2026-11-19');
   assert.ok(s.signals[0].layers.length === 4);
+});
+
+test('signal brief has every section, escapes text and links reports', () => {
+  const [pump] = detectSignals(records, { asOf: '2026-11-20' });
+  const protocols = assessProtocols(seed.protocols.slice(0, 1).map((p) => ({ title: p.title, body: p.body, url: 'https://x/wiki/p/1' })), new Date('2026-11-20'));
+  const evil = { ...records[0], summary: '<script>alert(1)</script> & co' };
+  const brief = buildSignalBrief(pump, [evil, ...records.slice(1)], { asOf: '2026-11-20', protocols, baseUrl: 'https://site.atlassian.net' });
+  assert.match(brief.title, /^Safety signal brief: .*VitaFlow 300.*\(2026-11-20\)$/);
+  for (const h of ['Where the holes lined up', 'The slices that held', 'Recommended system fixes', 'Related protocols', 'Timeline of reports', 'Decisions for the safety committee']) {
+    assert.ok(brief.body.includes(h), h);
+  }
+  assert.ok(!brief.body.includes('<script>'), 'summary must be escaped');
+  assert.ok(brief.body.includes('&lt;script&gt;'));
+  assert.ok(brief.body.includes('https://site.atlassian.net/browse/SAFE-1'));
+  assert.ok(brief.body.includes('stale · 56 months'));
+  assert.equal(brief.reports, 5);
+  assert.ok(brief.body.indexOf('>strong<') < brief.body.indexOf('>intermediate<'));
 });
 
 test('weekStart returns the Monday of the week', () => {

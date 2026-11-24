@@ -72,7 +72,7 @@ export async function loadDemoReports(projectKey) {
 }
 
 // Confluence v2 API for spaces and pages (the v1 space endpoints are retired).
-async function ensureProtocolSpace() {
+export async function ensureProtocolSpace() {
   const found = await ok(
     await asUser().requestConfluence(route`/wiki/api/v2/spaces?keys=${PROTOCOL_SPACE.key}`),
     'read protocol space'
@@ -132,4 +132,27 @@ export async function loadDemoProtocols() {
     created++;
   }
   return { spaceCreated: space.created, created, space: PROTOCOL_SPACE.key };
+}
+
+/**
+ * Create a Confluence page in the Clinical Protocols space unless one with the same
+ * title exists. Returns { url, created }.
+ */
+export async function publishPage(title, storageBody) {
+  const space = await ensureProtocolSpace();
+  const existing = await ok(
+    await asUser().requestConfluence(route`/wiki/api/v2/spaces/${space.id}/pages?title=${title}&limit=1`),
+    'find existing page'
+  );
+  const pageUrl = (p, base) => `${base || ''}${p._links?.webui || ''}`;
+  if (existing.results?.length) return { url: pageUrl(existing.results[0], existing._links?.base), created: false };
+  const page = await ok(
+    await asUser().requestConfluence(route`/wiki/api/v2/pages`, {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ spaceId: space.id, status: 'current', title, body: { representation: 'storage', value: storageBody } }),
+    }),
+    'create page'
+  );
+  return { url: pageUrl(page, page._links?.base), created: true };
 }
