@@ -55,10 +55,7 @@ function App() {
 
   return (
     <Stack space="space.300">
-      <Stack space="space.050">
-        <Heading size="large">Slice settings</Heading>
-        <Text>Choose which projects hold patient-safety reports and how sensitive signal detection is.</Text>
-      </Stack>
+      <Text>Choose which projects hold patient-safety reports and how sensitive signal detection is.</Text>
       {!isAdmin && (
         <SectionMessage appearance="warning" title="Read only">
           <Text>Only Jira administrators can change these settings.</Text>

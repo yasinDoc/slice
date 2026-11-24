@@ -108,6 +108,7 @@ and staleness, demo protocol space), and **Rovo** (`rovo:agent`, seven `action` 
 1. Install Slice from the installation link on a site with Jira (or JSM) and Confluence.
 2. Create a Jira project with key **SAFE**.
 3. In the project sidebar, open **Slice safety signals** → click **Load demo data** (admin).
+   (Settings live at Administration → Connected apps → Slice → ⋯ → **Configure**.)
    You should see *"Demo data ready: 34 reports created … 4 protocol pages in Confluence space CLINPROT."*
 4. The dashboard now shows 4 signals: pumps on Ward 6, potassium in ICU, specimen labelling in the
    emergency department, and falls on Ward 3.

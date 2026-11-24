@@ -57,7 +57,7 @@ Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonu
 | `rovo:mcp` | The five read-only tools, for Claude, Cursor and other MCP clients |
 | `jira:issuePanel` (UI Kit) | Signal banner, Swiss cheese layers, recommended fixes with one-click action items, similar reports, protocol staleness |
 | `jira:projectPage` (UI Kit) | **Slice safety signals** dashboard: stat tiles, signal cards (with **Publish brief to Confluence**), charts, latest reports |
-| `jira:adminPage` (UI Kit) | Settings (safety projects, signal threshold, look-back window, comments), admin-only, plus **Load demo data** |
+| `jira:adminPage` (UI Kit) | Settings (safety projects, signal threshold, look-back window, comments), admin-only, plus **Load demo data**. Open via Administration → Connected apps → Slice → ⋯ → **Configure** |
 | `trigger` | Indexes reports on create, update and delete; comments once per report per signal |
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the architecture, data model and scoring.
