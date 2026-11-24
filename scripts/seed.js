@@ -7,7 +7,7 @@
 //
 // Create an API token at https://id.atlassian.com/manage-profile/security/api-tokens.
 // Use a development site only: this data is fictional.
-import { readFileSync } from 'node:fs';
+import seed from '../src/demo-data.js';
 
 const {
   JIRA_BASE_URL,
@@ -25,7 +25,6 @@ if (!JIRA_BASE_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {
 
 const base = JIRA_BASE_URL.replace(/\/$/, '');
 const auth = `Basic ${Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64')}`;
-const seed = JSON.parse(readFileSync(new URL('../data/seed-reports.json', import.meta.url), 'utf8'));
 const only = process.argv.includes('--protocols-only') ? 'protocols' : process.argv.includes('--reports-only') ? 'reports' : null;
 
 async function call(path, body) {

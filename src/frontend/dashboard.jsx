@@ -99,6 +99,7 @@ function App() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -113,10 +114,20 @@ function App() {
     if (projectKey) load();
   }, [projectKey, load]);
 
-  const reindex = async () => {
+  const run = (name) => async () => {
     setBusy(true);
+    setError(null);
+    setNotice(null);
     try {
-      await invoke('reindexAll');
+      const res = await invoke(name);
+      if (name === 'loadDemo') {
+        setNotice(
+          `Demo data ready: ${res.reports.created} reports created (${res.reports.skipped} already there). ` +
+            (res.protocols.error
+              ? `Protocol pages skipped: ${res.protocols.error}`
+              : `${res.protocols.created} protocol pages in Confluence space ${res.protocols.space}.`)
+        );
+      }
       await load();
     } catch (e) {
       setError(e.message || String(e));
@@ -124,6 +135,8 @@ function App() {
       setBusy(false);
     }
   };
+  const reindex = run('reindexAll');
+  const loadDemo = run('loadDemo');
 
   if (error && !data)
     return (
@@ -284,13 +297,23 @@ function App() {
         </TabPanel>
       </Tabs>
 
-      <Inline space="space.100" alignBlock="center">
+      {notice && (
+        <SectionMessage appearance="success">
+          <Text>{notice}</Text>
+        </SectionMessage>
+      )}
+      <Inline space="space.100" alignBlock="center" shouldWrap>
         <Button onClick={load} isDisabled={busy}>
           Refresh
         </Button>
         <Button appearance="subtle" onClick={reindex} isDisabled={busy}>
-          {busy ? 'Indexing…' : 'Re-index all reports'}
+          {busy ? 'Working…' : 'Re-index all reports'}
         </Button>
+        {data.isAdmin && (
+          <Button appearance="subtle" onClick={loadDemo} isDisabled={busy}>
+            Load demo data
+          </Button>
+        )}
         {error && <Text color="color.text.danger">{error}</Text>}
         <Badge>{`as of ${data.asOf}`}</Badge>
       </Inline>

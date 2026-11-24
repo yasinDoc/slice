@@ -2,10 +2,9 @@
 // Runs the Slice engine on the synthetic seed data, with no Atlassian site needed.
 //   npm run demo            → signals and a sample RCA
 //   npm run demo -- SAFE-3  → RCA for a specific report
-import { readFileSync } from 'node:fs';
+import seed from '../src/demo-data.js';
 import { buildRecord, detectSignals, findSimilar, buildRcaDraft, assessProtocols } from '../src/engine/index.js';
 
-const seed = JSON.parse(readFileSync(new URL('../data/seed-reports.json', import.meta.url), 'utf8'));
 const records = seed.reports.map((r, i) =>
   buildRecord({ key: `SAFE-${i + 1}`, summary: r.summary, description: `Date of event: ${r.date}\n${r.description}` })
 );

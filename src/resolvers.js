@@ -4,6 +4,7 @@ import { panelData, reindexAll, indexIssue, dashboardData } from './analysis.js'
 import { markNotRelated, getSettings, saveSettings, validateSettings } from './store.js';
 import { getIssue, isJiraAdmin } from './atlassian.js';
 import { createSafetyAction } from './actions.js';
+import { loadDemoReports, loadDemoProtocols } from './demo.js';
 
 // Works both bundled by Forge and under plain Node ESM (CommonJS interop).
 const Resolver = ResolverPkg.default ?? ResolverPkg;
@@ -49,10 +50,26 @@ resolver.define('createAction', async (req) => {
   return res;
 });
 
+// Admin-only one-click demo setup: reports in the first safety project + protocol pages.
+resolver.define('loadDemo', async () => {
+  if (!(await isJiraAdmin())) throw new Error('Only Jira administrators can load demo data.');
+  const { projectKeys } = await getSettings();
+  const reports = await loadDemoReports(projectKeys[0]);
+  let protocols;
+  try {
+    protocols = await loadDemoProtocols();
+  } catch (e) {
+    protocols = { error: e.message };
+  }
+  const indexed = await reindexAll();
+  return { project: projectKeys[0], reports, protocols, indexed };
+});
+
 resolver.define('getDashboard', async (req) => {
   const projectKey = req.payload?.projectKey || req.context?.extension?.project?.key;
   if (!projectKey) throw new Error('Open Slice from a project.');
-  return dashboardData(projectKey);
+  const [data, isAdmin] = await Promise.all([dashboardData(projectKey), isJiraAdmin()]);
+  return { ...data, isAdmin };
 });
 
 resolver.define('getSettings', async () => ({ settings: await getSettings(), isAdmin: await isJiraAdmin() }));

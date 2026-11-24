@@ -3,9 +3,8 @@
 //   node --experimental-test-module-mocks --test tests/forge.test.js
 import { test, mock, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import seed from '../src/demo-data.js';
 
-const seed = JSON.parse(readFileSync(new URL('../data/seed-reports.json', import.meta.url), 'utf8'));
 const adf = (t) => ({ type: 'doc', version: 1, content: t.split('\n').map((l) => ({ type: 'paragraph', content: l ? [{ type: 'text', text: l }] : [] })) });
 const issues = new Map(
   seed.reports.map((r, i) => [

@@ -97,7 +97,7 @@ src/resolvers.js        Issue panel backend
 src/frontend/index.jsx  Issue panel (UI Kit)
 prompts/slice-agent.md  Agent instructions
 skills/safety-rca/      Rovo skill
-data/seed-reports.json  Synthetic reports and protocols (fictional devices, no real patients)
+src/demo-data.js        Synthetic reports and protocols (fictional devices, no real patients)
 scripts/                demo.js (offline) and seed.js (loads a dev site)
 ```
 

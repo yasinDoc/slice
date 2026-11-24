@@ -19,6 +19,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [demo, setDemo] = useState(null);
 
   useEffect(() => {
     invoke('getSettings')
@@ -98,6 +99,44 @@ function App() {
           {busy ? 'Saving…' : 'Save settings'}
         </Button>
       </Inline>
+
+      <Stack space="space.100">
+        <Heading size="medium">Demo data</Heading>
+        <Text>
+          {`Creates 34 synthetic near-miss reports (fictional devices, no real patients) in ${form.projectKeys.split(',')[0].trim()}, and a "Clinical Protocols" Confluence space with 4 protocol pages, two of them overdue for review. Safe to run twice: nothing is duplicated.`}
+        </Text>
+        {demo && (
+          <SectionMessage appearance={demo.error ? 'error' : 'success'}>
+            <Text>
+              {demo.error
+                ? demo.error
+                : `Reports created: ${demo.reports.created} (already there: ${demo.reports.skipped}). ` +
+                  (demo.protocols.error
+                    ? `Protocol pages skipped: ${demo.protocols.error}`
+                    : `Protocol pages created: ${demo.protocols.created} in space ${demo.protocols.space}. `) +
+                  `Indexed ${demo.indexed} reports. Open the project's "Slice safety signals" page.`}
+            </Text>
+          </SectionMessage>
+        )}
+        <Inline>
+          <Button
+            onClick={async () => {
+              setBusy(true);
+              setDemo(null);
+              try {
+                setDemo(await invoke('loadDemo'));
+              } catch (e) {
+                setDemo({ error: e.message });
+              } finally {
+                setBusy(false);
+              }
+            }}
+            isDisabled={!isAdmin || busy}
+          >
+            {busy ? 'Working…' : 'Load demo data'}
+          </Button>
+        </Inline>
+      </Stack>
     </Stack>
   );
 }

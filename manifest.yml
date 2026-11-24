@@ -248,3 +248,10 @@ permissions:
     - storage:app
     - read:confluence-content.all
     - search:confluence
+    - write:confluence-content
+    - write:confluence-space
+    - read:confluence-space.summary
+    - read:space:confluence
+    - write:space:confluence
+    - read:page:confluence
+    - write:page:confluence

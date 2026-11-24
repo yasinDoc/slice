@@ -111,7 +111,8 @@ export async function linkIssues(inwardKey, outwardKey, type = 'Relates') {
 /** Confluence pages labelled "protocol" that mention any of the terms. */
 export async function searchProtocols(terms, { limit = 5 } = {}) {
   const text = terms.map((t) => `text ~ "${String(t).replace(/"/g, '')}"`).join(' OR ');
-  const cql = `type = page AND label = "protocol"${text ? ` AND (${text})` : ''}`;
+  // Pages labelled "protocol" anywhere, or any page in the Clinical Protocols space.
+  const cql = `type = page AND (label = "protocol" OR space = "CLINPROT")${text ? ` AND (${text})` : ''}`;
   const res = await asUserApi()
     .requestConfluence(route`/wiki/rest/api/content/search?cql=${cql}&limit=${limit}&expand=body.storage,version`);
   const data = await ok(res, 'confluence search');
