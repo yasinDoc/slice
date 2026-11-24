@@ -182,6 +182,25 @@ modules:
       resolver:
         function: panel-resolver-fn
 
+  jira:projectPage:
+    - key: slice-dashboard
+      title: Slice safety signals
+      icon: resource:assets;slice-icon.svg
+      resource: dashboard
+      render: native
+      resolver:
+        function: panel-resolver-fn
+
+  jira:adminPage:
+    - key: slice-settings
+      title: Slice settings
+      icon: resource:assets;slice-icon.svg
+      resource: settings
+      render: native
+      useAsConfig: true
+      resolver:
+        function: panel-resolver-fn
+
   trigger:
     - key: slice-issue-events
       function: on-issue-event-fn
@@ -213,6 +232,10 @@ modules:
 resources:
   - key: panel
     path: src/frontend/index.jsx
+  - key: dashboard
+    path: src/frontend/dashboard.jsx
+  - key: settings
+    path: src/frontend/settings.jsx
   - key: agent-prompts
     path: prompts
   - key: assets

@@ -34,21 +34,27 @@ const place = (loc) =>
 
 function Slices({ slices, title }) {
   return (
-    <Stack space="space.050">
+    <Stack space="space.150">
       <Text>
         <Strong>{title}</Strong>
       </Text>
+      <Text size="small" color="color.text.subtle">
+        Red = a hole in that defensive layer. Green = the layer held.
+      </Text>
       {slices.map((l) => (
-        <Inline key={l.layer} space="space.100" alignBlock="center">
-          <Lozenge appearance={l.holes > 0 ? 'removed' : 'success'} isBold={l.holes > 0}>
-            {l.holes > 0 ? `${l.short} · hole` : `${l.short} · held`}
-          </Lozenge>
-          <Text>
+        <Stack key={l.layer} space="space.025">
+          <Inline space="space.100" alignBlock="center">
+            <Lozenge appearance={l.holes > 0 ? 'removed' : 'success'} isBold={l.holes > 0}>
+              {l.short}
+            </Lozenge>
+            {l.of > 1 && <Text size="small" color="color.text.subtle">{`${l.holes}/${l.of} reports`}</Text>}
+          </Inline>
+          <Text size="small">
             {l.holes > 0
-              ? `${l.factors.map((f) => (l.of > 1 ? `${f.label} (${f.count})` : f.label)).join(', ')}${l.of > 1 ? ` · ${l.holes}/${l.of} reports` : ''}`
-              : 'no hole found'}
+              ? l.factors.map((f) => (l.of > 1 ? `${f.label} (${f.count})` : f.label)).join(' · ')
+              : 'No hole found in this layer'}
           </Text>
-        </Inline>
+        </Stack>
       ))}
     </Stack>
   );
@@ -60,6 +66,7 @@ function App() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState({});
 
   const call = useCallback(
     async (name, extra = {}) => {
@@ -94,6 +101,7 @@ function App() {
     );
 
   const { record, similar, signal, slices, ownSlices, protocols } = data;
+  const recommendations = data.recommendations || [];
   const stale = protocols.filter((p) => p.stale);
 
   return (
@@ -133,6 +141,50 @@ function App() {
           <Strong>The slice that held: </Strong>
           {record.defences.join(', ')}
         </Text>
+      )}
+
+      {recommendations.length > 0 && (
+        <Stack space="space.100">
+          <Heading size="small">Recommended system fixes</Heading>
+          <Text size="small" color="color.text.subtle">
+            Strongest first (action hierarchy). Create a linked action item once your safety lead agrees.
+          </Text>
+          {recommendations.map((r) => (
+            <Stack key={r.text} space="space.050">
+              <Inline space="space.100" alignBlock="center">
+                <Lozenge appearance={r.strength === 'strong' ? 'success' : r.strength === 'intermediate' ? 'inprogress' : 'default'}>
+                  {r.strength}
+                </Lozenge>
+                <Text size="small" color="color.text.subtlest">{`addresses: ${r.addresses}`}</Text>
+              </Inline>
+              <Text>{r.text}</Text>
+              {created[r.text] ? (
+                <Link href={`/browse/${created[r.text]}`}>{`Created ${created[r.text]}`}</Link>
+              ) : (
+                <Inline>
+                <Button
+                  spacing="compact"
+                  isDisabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError(null);
+                    try {
+                      const res = await invoke('createAction', { issueKey, text: r.text, strength: r.strength, addresses: r.addresses });
+                      setCreated((c) => ({ ...c, [r.text]: res.created }));
+                    } catch (e) {
+                      setError(e.message || String(e));
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Create action
+                </Button>
+                </Inline>
+              )}
+            </Stack>
+          ))}
+        </Stack>
       )}
 
       {similar.length > 0 && (

@@ -10,6 +10,8 @@ import {
   protocolTerms,
   buildRcaDraft,
   DEFENCES,
+  summarize,
+  recommend,
 } from './engine/index.js';
 import { getIssue, searchIssues, searchProtocols, visibleKeys } from './atlassian.js';
 import { saveRecord, getRecord, deleteRecord, allRecords, getSettings, getFeedback } from './store.js';
@@ -115,7 +117,9 @@ export async function panelData(key) {
     asOf: new Date().toISOString().slice(0, 10),
   });
   const protocols = await protocolsFor(record);
+  const clusterSlices = sliceProfile([record, ...matches.map((m) => m.record)]);
   return {
+    recommendations: recommend(clusterSlices).slice(0, 4),
     record: {
       ...brief(record),
       factors: record.factors,
@@ -124,7 +128,7 @@ export async function panelData(key) {
     },
     similar: matches.map((m) => ({ ...brief(m.record), score: m.score, reasons: m.reasons })),
     signal: sigs[0] ? { title: sigs[0].title, count: sigs[0].count, keys: sigs[0].keys, harmCount: sigs[0].harmCount } : null,
-    slices: sliceProfile([record, ...matches.map((m) => m.record)]),
+    slices: clusterSlices,
     ownSlices: sliceProfile([record]),
     protocols,
   };
@@ -137,3 +141,22 @@ export async function rcaDraft(key) {
 }
 
 export { brief };
+
+/** Project-level overview for the Slice dashboard page (permission-aware). */
+export async function dashboardData(projectKey) {
+  const settings = await getSettings();
+  const configured = settings.projectKeys.includes(projectKey);
+  if (!configured) return { configured: false, projectKey, projectKeys: settings.projectKeys };
+  const all = (await allRecords()).filter((r) => r.projectKey === projectKey);
+  const allowed = await visibleKeys(all.map((r) => r.key));
+  const records = all.filter((r) => allowed.has(r.key));
+  return {
+    configured: true,
+    projectKey,
+    ...summarize(records, {
+      asOf: new Date().toISOString().slice(0, 10),
+      windowDays: settings.windowDays,
+      minSignalCount: settings.minSignalCount,
+    }),
+  };
+}

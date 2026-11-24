@@ -31,7 +31,7 @@ function signalKeys(r) {
 
 export function describeSignal(facets, count, days) {
   const parts = [];
-  if (facets.category) parts.push(catLabel(facets.category).toLowerCase());
+  if (facets.category) parts.push(catLabel(facets.category).replace(/^[A-Z][a-z]/, (m) => m.toLowerCase()));
   parts.push(facets.drug ? `reports involving ${facets.drug}` : 'reports');
   if (facets.deviceModel) parts.push(`${facets.drug ? 'on' : 'involving'} ${facets.deviceModel}`);
   if (facets.location) parts.push(`in ${facets.location.replace('ward-', 'Ward ').replace(/^icu$/, 'ICU').replace(/^ed$/, 'ED')}`);

@@ -21,6 +21,7 @@ const labels = [];
 const created = [];
 const hidden = new Set(['SAFE-2']); // pretend the user cannot see this one
 
+let isAdmin = true;
 const json = (body, status = 200) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
 
 function fakeProduct(user) {
@@ -31,6 +32,9 @@ function fakeProduct(user) {
       if ((m = p.match(/^\/rest\/api\/3\/issue\/([A-Z]+-\d+)\?/))) {
         if (user && hidden.has(m[1])) return json({ errorMessages: ['not found'] }, 404);
         return issues.has(m[1]) ? json(issues.get(m[1])) : json({}, 404);
+      }
+      if (p.startsWith('/rest/api/3/mypermissions')) {
+        return json({ permissions: { ADMINISTER: { havePermission: isAdmin } } });
       }
       if (p === '/rest/api/3/search/jql') {
         const { jql } = JSON.parse(init.body);
@@ -194,10 +198,41 @@ test('actions return a readable error without an issue key', async () => {
   assert.match(res.error, /No issue key/);
 });
 
+test('dashboard resolver summarises the safety project', async () => {
+  const res = await app.panelResolver({ call: { functionKey: 'getDashboard', payload: { projectKey: 'SAFE' } }, context: {} });
+  const data = res?.body ?? res;
+  assert.equal(data.configured, true);
+  assert.ok(data.signals.some((s) => /VitaFlow 300/.test(s.title)), JSON.stringify(data.signals.map((s) => s.title)));
+  assert.ok(!data.latest.some((r) => r.key === 'SAFE-2'), 'hidden report must not appear');
+  const other = await app.panelResolver({ call: { functionKey: 'getDashboard', payload: { projectKey: 'DEV' } }, context: {} });
+  assert.equal((other?.body ?? other).configured, false);
+});
+
+test('only admins can save settings, and input is validated', async () => {
+  const call = (payload) => app.panelResolver({ call: { functionKey: 'saveSettings', payload }, context: {} });
+  isAdmin = false;
+  await assert.rejects(call({ minSignalCount: 2 }), /administrators/);
+  isAdmin = true;
+  const res = await call({ projectKeys: 'safe, icu_2', minSignalCount: 4 });
+  const saved = (res?.body ?? res).settings;
+  assert.deepEqual(saved.projectKeys, ['SAFE', 'ICU_2']);
+  assert.equal(saved.minSignalCount, 4);
+  await assert.rejects(call({ windowDays: 9999 }), /Look-back window/);
+  await assert.rejects(call({ projectKeys: 'bad key!' }), /Project keys/);
+  // restore defaults for later tests
+  await app.panelResolver({ call: { functionKey: 'saveSettings', payload: { projectKeys: 'SAFE', minSignalCount: 3 } }, context: {} });
+});
+
 test('panel resolver returns signal, slices and protocols', async () => {
   const res = await app.panelResolver({ call: { functionKey: 'getPanel', payload: { issueKey: 'SAFE-5' } }, context: {} });
   const data = res?.body ?? res;
   assert.ok(data.signal, JSON.stringify(data).slice(0, 300));
   assert.equal(data.slices.length, 4);
   assert.ok(data.protocols[0].stale);
+  assert.equal(data.recommendations[0].strength, 'strong');
+  const made = await app.panelResolver({
+    call: { functionKey: 'createAction', payload: { issueKey: 'SAFE-5', text: data.recommendations[0].text, strength: 'strong', addresses: 'x' } },
+    context: {},
+  });
+  assert.equal((made?.body ?? made).linkedTo, 'SAFE-5');
 });

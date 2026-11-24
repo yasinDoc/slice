@@ -47,6 +47,14 @@ export async function visibleKeys(keys) {
   return new Set(issues.map((i) => i.key).filter((k) => wanted.has(k)));
 }
 
+/** True if the current user is a Jira administrator. */
+export async function isJiraAdmin() {
+  const res = await asUserApi().requestJira(route`/rest/api/3/mypermissions?permissions=ADMINISTER`);
+  if (!res.ok) return false;
+  const data = await res.json();
+  return Boolean(data?.permissions?.ADMINISTER?.havePermission);
+}
+
 const adfParagraphs = (text) => ({
   type: 'doc',
   version: 1,

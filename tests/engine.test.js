@@ -14,6 +14,8 @@ import {
   parseReviewDate,
   adfToText,
   detectDevice,
+  summarize,
+  weekStart,
 } from '../src/engine/index.js';
 
 const seed = JSON.parse(readFileSync(new URL('../data/seed-reports.json', import.meta.url), 'utf8'));
@@ -125,6 +127,26 @@ test('RCA draft ranks strong fixes first and keeps reminders', () => {
   assert.ok(draft.timeline.length >= 5);
   assert.ok(draft.defencesThatHeld.length >= 1);
   assert.ok(draft.reminders.some((r) => /blame/i.test(r)));
+});
+
+test('dashboard summary counts signals, layers, factors and weeks', () => {
+  const s = summarize(records, { asOf: '2026-11-20', windowDays: 90, weeks: 12 });
+  assert.equal(s.totals.reports, records.length);
+  assert.equal(s.totals.signals, 4);
+  assert.ok(s.totals.reachedPatient >= 2);
+  assert.equal(s.layers.length, 4);
+  assert.ok(s.layers.find((l) => l.layer === 'Unsafe acts').holes > 10);
+  assert.ok(s.topFactors.length > 3 && s.topFactors[0].count >= s.topFactors[1].count);
+  assert.equal(s.weekly.length, 24);
+  assert.equal(s.weekly.reduce((n, w) => n + w.count, 0), records.length);
+  assert.equal(s.latest[0].date, '2026-11-19');
+  assert.ok(s.signals[0].layers.length === 4);
+});
+
+test('weekStart returns the Monday of the week', () => {
+  assert.equal(weekStart('2026-11-19'), '2026-11-16');
+  assert.equal(weekStart('2026-11-16'), '2026-11-16');
+  assert.equal(weekStart('2026-11-22'), '2026-11-16');
 });
 
 test('adfToText flattens Atlassian Document Format', () => {

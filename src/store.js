@@ -13,6 +13,29 @@ export async function getSettings() {
   return { ...DEFAULT_SETTINGS, ...(s || {}) };
 }
 
+/** Whitelist and clamp settings coming from the UI. Throws on invalid input. */
+export function validateSettings(input) {
+  const out = {};
+  if (input.projectKeys !== undefined) {
+    const keys = (Array.isArray(input.projectKeys) ? input.projectKeys : String(input.projectKeys).split(','))
+      .map((k) => String(k).trim().toUpperCase())
+      .filter(Boolean);
+    if (!keys.length || keys.some((k) => !/^[A-Z][A-Z0-9_]{1,9}$/.test(k))) {
+      throw new Error('Project keys must look like SAFE or ICU_2 (letters, digits, underscore).');
+    }
+    out.projectKeys = [...new Set(keys)].slice(0, 10);
+  }
+  const int = (v, min, max, name) => {
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < min || n > max) throw new Error(`${name} must be a whole number from ${min} to ${max}.`);
+    return n;
+  };
+  if (input.minSignalCount !== undefined) out.minSignalCount = int(input.minSignalCount, 2, 20, 'Reports per signal');
+  if (input.windowDays !== undefined) out.windowDays = int(input.windowDays, 14, 365, 'Look-back window');
+  if (input.commentOnSignal !== undefined) out.commentOnSignal = Boolean(input.commentOnSignal);
+  return out;
+}
+
 export async function saveSettings(patch) {
   const next = { ...(await getSettings()), ...patch };
   await kvs.set('settings', next);
