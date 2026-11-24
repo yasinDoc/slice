@@ -26,7 +26,8 @@ reads them side by side.
 | **Connect** | Each new report is compared with the history and grouped into signals ("4th pump-rate error on Ward 6 in 30 days") | `src/engine/similarity.js`, `signals.js` |
 | **Check protocols** | Matching Confluence protocols are found and flagged if their review date is more than 24 months old | `src/engine/rca.js` |
 | **Investigate** | Rovo drafts a root cause analysis with system-level fixes ranked by strength (hierarchy of controls) | Rovo agent + `draft-rca` |
-| **Act** | After a human approves, Slice creates linked Jira action items | `create-safety-action` |
+| **Act** | After a human approves, Slice creates linked Jira action items (panel button or Rovo) | `createAction`, `create-safety-action` |
+| **Oversee** | Project dashboard: signals, Swiss cheese profile, top causes, defences that held, weekly trend | `jira:projectPage`, `src/engine/dashboard.js` |
 
 ## 3. Principles
 
@@ -57,7 +58,7 @@ reads them side by side.
  Rovo skill safety-rca┼──▶ action modules ──▶ engine (pure JS) ◀── KVS records
  rovo:mcp (external) ─┘                         │
                                                 └──▶ Confluence CQL (protocols)
- Jira issue panel (UI Kit) ──▶ resolver ──▶ same engine
+ Jira issue panel / project dashboard / admin settings (UI Kit) ──▶ resolver ──▶ same engine
 ```
 
 The engine (`src/engine/*`) is pure JavaScript with no Forge imports, so it is unit-tested
@@ -68,7 +69,7 @@ with `node --test`.
 | Key | Value |
 |---|---|
 | `report:<ISSUE-KEY>` | `{ key, summary, text, eventDate, category, location, device, deviceModel, drug, shift, outcome, factors[], defences[], tokens[], redactions }`, all redacted |
-| `alert:<signalId>` | `{ count, at }`, to avoid repeating the same signal comment |
+| `alert:<signalId>` | `{ keys[], count, at }`: reports already alerted for this signal (one comment per report) |
 | `settings` | `{ projectKeys: ["SAFE"], commentOnSignal: true, minSignalCount: 3, windowDays: 90 }` |
 | `feedback:<ISSUE-KEY>` | `{ helpful, notRelated[] }`, used to suppress wrong matches |
 
@@ -115,8 +116,10 @@ Slice always suggests at least one strong or intermediate action before any weak
 - [x] Engine: redaction, extraction, Swiss cheese layers, similarity, signals, RCA draft
 - [x] Forge: trigger indexing, Rovo agent, actions, skill, MCP, issue panel
 - [x] Synthetic seed data with deliberate clusters
+- [x] Project dashboard, admin settings (admin-only, validated), one-click demo data
+- [x] Recommended fixes with one-click linked action items in the panel
 - [ ] Assignable investigator (`rovo:agentConnector`, which needs a remote A2A service)
 - [ ] Confluence "Safety signal" report page per signal
 - [ ] Teamwork Graph objects for reports and protocols
-- [ ] Trend dashboard (`jira:projectPage`), showing whether fixes reduced repeat reports
+- [ ] Before/after view: did a fix reduce repeat reports in that pattern?
 - [ ] Feedback-driven tuning of similarity weights
