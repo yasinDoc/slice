@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Slice architecture</title>
+  <desc id="d">Jira issue events feed a Forge trigger that redacts and indexes reports into Forge storage. A pure, tested engine computes signals, Swiss cheese layers, fixes, briefs and impact. The issue panel, project dashboard, admin settings, Rovo agent and MCP all read from the same engine. Slice writes comments, action items and Confluence pages back. Nothing leaves Atlassian.</desc>
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#52606D"/></marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#F8FAFC"/>
+  <text x="32" y="42" font-size="22" font-weight="700" fill="#1F2933">How Slice works</text>
+  <text x="32" y="66" font-size="14" fill="#52606D">Everything runs on Atlassian Forge. No external calls. Patient identifiers are removed before storage.</text>
+
+  <!-- Atlassian products -->
+  <g font-size="14">
+    <rect x="32" y="100" width="210" height="150" rx="12" fill="#E9F2FF" stroke="#0C66E4"/>
+    <text x="137" y="126" text-anchor="middle" font-weight="700" fill="#0C66E4">Jira / JSM</text>
+    <text x="137" y="152" text-anchor="middle" fill="#1F2933">Near-miss reports</text>
+    <text x="137" y="174" text-anchor="middle" fill="#1F2933">(SAFE project)</text>
+    <text x="137" y="206" text-anchor="middle" fill="#52606D" font-size="12">← signal comments</text>
+    <text x="137" y="226" text-anchor="middle" fill="#52606D" font-size="12">← linked action items</text>
+
+    <rect x="32" y="300" width="210" height="150" rx="12" fill="#E9F2FF" stroke="#0C66E4"/>
+    <text x="137" y="326" text-anchor="middle" font-weight="700" fill="#0C66E4">Confluence</text>
+    <text x="137" y="352" text-anchor="middle" fill="#1F2933">Clinical protocols</text>
+    <text x="137" y="374" text-anchor="middle" fill="#1F2933">(review dates)</text>
+    <text x="137" y="400" text-anchor="middle" fill="#52606D" font-size="12">← safety signal briefs</text>
+  </g>
+
+  <!-- trigger + redact -->
+  <rect x="290" y="120" width="190" height="110" rx="12" fill="#FFFFFF" stroke="#8590A2"/>
+  <text x="385" y="148" text-anchor="middle" font-size="14" font-weight="700" fill="#1F2933">Trigger</text>
+  <text x="385" y="172" text-anchor="middle" font-size="12" fill="#52606D">issue created / updated /</text>
+  <text x="385" y="190" text-anchor="middle" font-size="12" fill="#52606D">deleted</text>
+  <text x="385" y="214" text-anchor="middle" font-size="12" font-weight="700" fill="#D93025">redact → extract</text>
+
+  <!-- storage -->
+  <rect x="290" y="300" width="190" height="110" rx="12" fill="#FFFFFF" stroke="#8590A2"/>
+  <text x="385" y="328" text-anchor="middle" font-size="14" font-weight="700" fill="#1F2933">Forge storage</text>
+  <text x="385" y="352" text-anchor="middle" font-size="12" fill="#52606D">redacted records, settings,</text>
+  <text x="385" y="370" text-anchor="middle" font-size="12" fill="#52606D">alerts, actions, feedback</text>
+
+  <!-- engine -->
+  <rect x="530" y="150" width="190" height="240" rx="12" fill="#FFF7E0" stroke="#B7791F" stroke-width="2"/>
+  <text x="625" y="180" text-anchor="middle" font-size="15" font-weight="700" fill="#8A5A00">Engine</text>
+  <text x="625" y="200" text-anchor="middle" font-size="11" fill="#8A5A00">pure JS · unit-tested</text>
+  <g font-size="12" fill="#1F2933" text-anchor="middle">
+    <text x="625" y="230">similarity + signals</text>
+    <text x="625" y="254">Swiss cheese layers</text>
+    <text x="625" y="278">fixes (action hierarchy)</text>
+    <text x="625" y="302">protocol staleness</text>
+    <text x="625" y="326">dashboard summary</text>
+    <text x="625" y="350">signal briefs</text>
+    <text x="625" y="374">"did it work?" impact</text>
+  </g>
+
+  <!-- surfaces -->
+  <g font-size="13">
+    <rect x="770" y="100" width="160" height="56" rx="10" fill="#DCFFF1" stroke="#1F845A"/>
+    <text x="850" y="124" text-anchor="middle" font-weight="700" fill="#1F845A">Issue panel</text>
+    <text x="850" y="143" text-anchor="middle" font-size="11" fill="#52606D">signal · layers · fixes</text>
+
+    <rect x="770" y="168" width="160" height="56" rx="10" fill="#DCFFF1" stroke="#1F845A"/>
+    <text x="850" y="192" text-anchor="middle" font-weight="700" fill="#1F845A">Dashboard</text>
+    <text x="850" y="211" text-anchor="middle" font-size="11" fill="#52606D">signals · charts · actions</text>
+
+    <rect x="770" y="236" width="160" height="56" rx="10" fill="#DCFFF1" stroke="#1F845A"/>
+    <text x="850" y="260" text-anchor="middle" font-weight="700" fill="#1F845A">Admin settings</text>
+    <text x="850" y="279" text-anchor="middle" font-size="11" fill="#52606D">admin-only · demo data</text>
+
+    <rect x="770" y="304" width="160" height="56" rx="10" fill="#F3F0FF" stroke="#6E5DC6"/>
+    <text x="850" y="328" text-anchor="middle" font-weight="700" fill="#6E5DC6">Rovo agent</text>
+    <text x="850" y="347" text-anchor="middle" font-size="11" fill="#52606D">7 actions · RCA skill</text>
+
+    <rect x="770" y="372" width="160" height="56" rx="10" fill="#F3F0FF" stroke="#6E5DC6"/>
+    <text x="850" y="396" text-anchor="middle" font-weight="700" fill="#6E5DC6">rovo:mcp</text>
+    <text x="850" y="415" text-anchor="middle" font-size="11" fill="#52606D">read-only tools</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#52606D" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M242,175 L286,175"/>
+    <path d="M385,230 L385,296"/>
+    <path d="M480,355 L526,330"/>
+    <path d="M242,428 L625,428 L625,394" stroke-dasharray="5 5"/>
+    <path d="M720,200 L766,128"/>
+    <path d="M720,220 L766,196"/>
+    <path d="M720,250 L766,264"/>
+    <path d="M720,290 L766,332"/>
+    <path d="M720,320 L766,400"/>
+  </g>
+  <text x="32" y="492" font-size="12" fill="#7B8794">Solid arrows: data flow. Dashed: protocol search. Green surfaces are verified live in production; purple surfaces need a Rovo-enabled site.</text>
+</svg>

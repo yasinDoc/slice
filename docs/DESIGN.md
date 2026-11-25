@@ -25,16 +25,19 @@ reads them side by side.
 | **Slice** | Contributing factors are mapped onto Reason's four layers: organisation, supervision, preconditions, unsafe acts | `src/engine/lexicon.js` |
 | **Connect** | Each new report is compared with the history and grouped into signals ("4th pump-rate error on Ward 6 in 30 days") | `src/engine/similarity.js`, `signals.js` |
 | **Check protocols** | Matching Confluence protocols are found and flagged if their review date is more than 24 months old | `src/engine/rca.js` |
-| **Investigate** | Rovo drafts a root cause analysis with system-level fixes ranked by strength (hierarchy of controls) | Rovo agent + `draft-rca` |
-| **Act** | After a human approves, Slice creates linked Jira action items (panel button or Rovo) | `createAction`, `create-safety-action` |
+| **Recommend** | System-level fixes for the layers with holes, sorted by the action hierarchy (strong → intermediate → weak) | `src/engine/rca.js` (`recommend`) |
+| **Act** | After a human agrees, Slice creates a linked Jira action item (panel button or Rovo) | `createAction`, `create-safety-action` |
+| **Close the loop** | Each signal tracks its action items, their live status, and recurrence since the first action vs an equal window before | `src/engine/impact.js` |
+| **Brief** | A Confluence page per signal: layers, defences, fixes, stale protocols, linked timeline, decision checklist | `src/engine/brief.js`, `publishPage` |
 | **Oversee** | Project dashboard: signals, Swiss cheese profile, top causes, defences that held, weekly trend | `jira:projectPage`, `src/engine/dashboard.js` |
+| **Converse** *(Rovo sites)* | The Slice agent answers questions and drafts an RCA using the same actions | `rovo:agent`, `rovo:skill`, `action` ×7 |
 
 ## 3. Principles
 
 1. **Blame-free.** Slice looks for system causes. It never ranks, scores or names individuals.
    The agent prompt forbids it.
 2. **Humans decide.** Slice drafts and suggests. People approve every change. The only
-   automatic write is a signal comment with a label, and that can be switched off.
+   automatic write is a signal comment with a label, and admins can switch that off.
 3. **No patient data stored.** Redaction runs before storage. Only redacted text and
    facets are kept in Forge storage.
 4. **Runs on Atlassian.** No external egress. The pattern engine is deterministic and
@@ -45,24 +48,16 @@ reads them side by side.
 
 ## 4. Architecture
 
-```
- Jira / JSM work item (SAFE project)
-        │ avi:jira:created|updated:issue
-        ▼
- trigger ──▶ indexer: redact → extract → store record (Forge KVS)
-                        │
-                        ▼
-              signal check ──▶ (optional) comment + label "slice-signal"
+![Slice architecture](img/architecture.svg)
 
- Rovo agent "Slice" ─┐
- Rovo skill safety-rca┼──▶ action modules ──▶ engine (pure JS) ◀── KVS records
- rovo:mcp (external) ─┘                         │
-                                                └──▶ Confluence CQL (protocols)
- Jira issue panel / project dashboard / admin settings (UI Kit) ──▶ resolver ──▶ same engine
-```
-
-The engine (`src/engine/*`) is pure JavaScript with no Forge imports, so it is unit-tested
-with `node --test`.
+- **Trigger** (`avi:jira:created|updated|deleted:issue`): fetch the issue, skip Slice's own
+  action items (label `slice-action`), redact, extract and store. On delete, drop the record. Then
+  check signals and comment once per report per signal.
+- **Engine** (`src/engine/*`): pure JavaScript with no Forge imports, unit-tested with `node --test`.
+- **Surfaces**: the issue panel, dashboard and settings (UI Kit resolvers), and the Rovo actions,
+  all call the same engine, so behaviour is identical everywhere.
+- **Permissions**: user-facing results are filtered to issues the current user can open. Settings
+  and demo data require the Jira `ADMINISTER` permission. Writes that a user triggers run as that user.
 
 ### Data model (KVS)
 
@@ -72,7 +67,7 @@ with `node --test`.
 | `alert:<signalId>` | `{ keys[], count, at }`: reports already alerted for this signal (one comment per report) |
 | `settings` | `{ projectKeys: ["SAFE"], commentOnSignal: true, minSignalCount: 3, windowDays: 90 }` |
 | `action:<ISSUE-KEY>` | `{ key, from, text, strength, createdAt }`: action items Slice created (excluded from indexing via the `slice-action` label) |
-| `feedback:<ISSUE-KEY>` | `{ helpful, notRelated[] }`, used to suppress wrong matches |
+| `feedback:<ISSUE-KEY>` | `{ notRelated[] }`: matches a user marked "not related", hidden for that report |
 
 ### Similarity
 
@@ -88,8 +83,15 @@ The score between two reports is a weighted sum (weights in `similarity.js`):
 | shift | 0.05 |
 | text (term cosine) | 0.10 |
 
-A report counts as "similar" at a score of 0.45 or more. A **signal** is three or more
-similar reports within 90 days that share a category and a location, device or drug.
+A report counts as "similar" at a score of 0.45 or more. A **signal** is a group of at least
+`minSignalCount` (default 3) reports within the look-back window (default 90 days) that share one of:
+
+- the same **category and location** (e.g. infusion errors on Ward 6)
+- the same **category and device model** (e.g. infusion errors on VitaFlow 300)
+- the same **drug** (e.g. potassium chloride)
+
+Signals whose reports are a subset of a larger signal are merged into it. Both thresholds are
+admin settings.
 
 ### Recommendation strength
 
@@ -101,16 +103,16 @@ The strength levels follow the action hierarchy used in safety science (stronges
   Examples: an independent double check, barcode scanning.
 - **Weak:** training, a new policy, warnings.
 
-Slice always suggests at least one strong or intermediate action before any weak one.
+Fixes are listed strongest first, and the agent's prompt tells it never to propose weak fixes alone.
 
 ## 5. Bonus-prize mapping
 
 | Bonus | Module |
 |---|---|
-| Best Agents | `rovo:agent` Slice, plus reusable `action` modules and the `rovo:skill` safety-rca |
-| Best MCP | `rovo:mcp` exposes the read-only safety tools to external MCP clients |
+| Best Agents (entered) | `rovo:agent` Slice, seven reusable `action` modules and the `rovo:skill` safety-rca |
+| Best MCP (not entered) | `rovo:mcp` is included but could not be verified without Rovo |
 | Teamwork Graph | Planned: links reports, protocols, wards and actions in the graph |
-| Marketplace | The no-egress, no-PHI design is built with a listing in mind |
+| Marketplace | The no-egress, identifier-free design is built with a listing in mind |
 
 ## 6. Roadmap
 
