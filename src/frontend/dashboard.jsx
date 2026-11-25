@@ -231,7 +231,7 @@ function App() {
                   <SignalCard key={s.id} s={s} projectKey={data.projectKey} />
                 ))}
                 <Text size="small" color="color.text.subtle">
-                  Open any report and ask the Slice agent in Rovo to "draft an RCA" for the full investigation.
+                  Publish a brief for the safety committee, or open any report for its layers and recommended fixes.
                 </Text>
               </Stack>
             ) : (

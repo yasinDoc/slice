@@ -138,6 +138,9 @@ export async function panelData(key) {
   const clusterSlices = sliceProfile([record, ...matches.map((m) => m.record)]);
   return {
     recommendations: recommend(clusterSlices).slice(0, 4),
+    // Fixes that already have an action item from this report (text -> issue key),
+    // so the panel shows "Created SAFE-70" instead of offering a duplicate.
+    existingActions: await existingActionsFor(key, recommend(clusterSlices).slice(0, 4)),
     record: {
       ...brief(record),
       factors: record.factors,
@@ -218,4 +221,28 @@ async function actionStatuses(projectKey, items) {
     map.set(i.key, { name: i.fields?.status?.name || 'Unknown', done: i.fields?.status?.statusCategory?.key === 'done' });
   }
   return map;
+}
+
+/**
+ * Fixes from this report that already have an action item (fix text -> issue key).
+ * Uses Slice's own records, plus linked `slice-action` issues in Jira so the answer
+ * survives a storage reset (e.g. reinstalling the app).
+ */
+async function existingActionsFor(key, recommendations) {
+  const out = Object.fromEntries((await allActionItems()).filter((a) => a.from === key).map((a) => [a.text, a.key]));
+  try {
+    const linked = await searchIssues(`issue in linkedIssues("${key}") AND labels = slice-action`, {
+      asUser: true,
+      fields: ['summary'],
+      max: 50,
+    });
+    for (const i of linked) {
+      const summary = String(i.fields?.summary || '').replace(/…$/, '');
+      const fix = recommendations.find((r) => r.text === summary || r.text.startsWith(summary));
+      if (fix && !out[fix.text]) out[fix.text] = i.key;
+    }
+  } catch (e) {
+    console.warn('linked action lookup failed', e.message);
+  }
+  return out;
 }

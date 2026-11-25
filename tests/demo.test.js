@@ -22,7 +22,9 @@ const product = {
     if (p === '/rest/api/3/search/jql') {
       const { jql } = JSON.parse(init.body);
       const label = jql.match(/labels = ([a-z-]+)/)?.[1];
-      const list = label ? issues.filter((i) => (i.fields.labels || []).includes(label)) : issues;
+      let list = label ? issues.filter((i) => (i.fields.labels || []).includes(label)) : issues;
+      const linkedTo = jql.match(/linkedIssues\("([A-Z]+-\d+)"\)/)?.[1];
+      if (linkedTo) list = list.filter((i) => (i.links || []).includes(linkedTo));
       return json({ issues: list });
     }
     if (p === '/rest/api/3/issue' && init.method === 'POST') {
@@ -31,7 +33,12 @@ const product = {
       issues.push({ key, fields: { ...f, project: { key: 'SAFE' }, status: { name: 'To Do', statusCategory: { key: 'new' } } } });
       return json({ key }, 201);
     }
-    if (p === '/rest/api/3/issueLink') return json({}, 201);
+    if (p === '/rest/api/3/issueLink') {
+      const { inwardIssue, outwardIssue } = JSON.parse(init.body);
+      const out = issues.find((x) => x.key === outwardIssue.key);
+      if (out) out.links = [...(out.links || []), inwardIssue.key];
+      return json({}, 201);
+    }
     if (/^\/rest\/api\/3\/issue\/SAFE-\d+\?/.test(p)) {
       const k = p.match(/SAFE-\d+/)[0];
       const i = issues.find((x) => x.key === k);
@@ -197,4 +204,28 @@ test('Slice action items are never indexed as safety reports', async () => {
   const panel = await call('getPanel', { issueKey: made.created });
   assert.equal(panel.actionItem, true);
   assert.equal(panel.from, 'SAFE-9');
+});
+
+test('panel remembers fixes that already have an action item', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const before = await call('getPanel', { issueKey: 'SAFE-3' });
+  const fix = before.recommendations[0].text;
+  assert.equal(before.existingActions[fix], undefined);
+  const made = await call('createAction', { issueKey: 'SAFE-3', text: fix, strength: 'strong', addresses: 'x' });
+  const after = await call('getPanel', { issueKey: 'SAFE-3' });
+  assert.equal(after.existingActions[fix], made.created);
+  const long = 'x'.repeat(150);
+  const madeLong = await call('createAction', { issueKey: 'SAFE-3', text: long, strength: 'weak', addresses: 'x' });
+  const again = await call('getPanel', { issueKey: 'SAFE-3' });
+  assert.equal(again.existingActions[long], madeLong.created, 'full fix text is kept even when the summary is truncated');
+});
+
+test('panel finds existing actions from Jira links even if Slice storage was reset', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const panel = await call('getPanel', { issueKey: 'SAFE-4' });
+  const fix = panel.recommendations[0].text;
+  const made = await call('createAction', { issueKey: 'SAFE-4', text: fix, strength: 'strong', addresses: 'x' });
+  store.delete(`action:${made.created}`); // simulate a reinstall wiping Slice's records
+  const after = await call('getPanel', { issueKey: 'SAFE-4' });
+  assert.equal(after.existingActions[fix], made.created);
 });

@@ -116,7 +116,7 @@ export async function createSafetyAction(payload) {
     await saveActionItem({
       key: created.key,
       from: key,
-      text: payload.summary,
+      text: payload.fixText || payload.summary,
       strength: payload.strength || null,
       createdAt: new Date().toISOString().slice(0, 10),
     });

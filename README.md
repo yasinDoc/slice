@@ -16,6 +16,7 @@ A patient-safety learning app for Jira, Confluence and Rovo, built on Atlassian 
 <p align="center">
   <a href="#try-it-in-5-minutes">Try it</a> ·
   <a href="#what-slice-does">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="docs/DESIGN.md">Design</a> ·
   <a href="PRIVACY.md">Privacy</a> ·
@@ -72,6 +73,21 @@ report, works out which layers had holes, and tells you when the same holes keep
 | **Confluence** | Signal briefs and the *Clinical Protocols* space |
 | **Settings** (Administration → Connected apps → Slice → ⋯ → Configure) | Safety projects, signal threshold, look-back window, comments on/off, **Load demo data** |
 
+## Screenshots
+
+*From a live production install, using the synthetic demo data.*
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/dashboard.jpg" alt="Slice safety signals dashboard in Jira: stat tiles and signal cards with Swiss cheese layers, actions and Publish brief"><br><sub><b>Dashboard:</b> 4 signals, layers with holes, tracked actions and <i>did it work?</i></sub></td>
+    <td width="50%"><img src="docs/img/panel-fixes.jpg" alt="Slice issue panel on SAFE-5: Swiss cheese layers, the slice that held, and recommended fixes with created action items"><br><sub><b>Issue panel:</b> layers, the slice that held, fixes ranked by strength, linked actions</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/img/brief.jpg" alt="Safety signal brief published to Confluence with a Swiss cheese table and the defences that held"><br><sub><b>Confluence brief:</b> one click, ready for the safety committee</sub></td>
+    <td width="50%"><img src="docs/img/comment.jpg" alt="Slice comment on a new Jira report: signal title, related reports and the layers where the holes are lining up"><br><sub><b>Alert in context:</b> a new report joins the pattern, and Slice says so without blaming anyone</sub></td>
+  </tr>
+</table>
+
 ## Try it in 5 minutes
 
 1. Install Slice on a site with **Jira** (or Jira Service Management) and **Confluence**.
@@ -121,7 +137,7 @@ Requirements: **Node 22.3+** and, to deploy, the [Forge CLI](https://developer.a
 
 ```bash
 npm install
-npm test         # 37 tests: engine, Forge integration (mocked Jira, Confluence, KVS), demo loader
+npm test         # 39 tests: engine, Forge integration (mocked Jira, Confluence, KVS), demo loader
 npm run demo     # run the engine on the demo data offline: signals plus a sample RCA
 ```
 

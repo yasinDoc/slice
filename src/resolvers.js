@@ -47,6 +47,7 @@ resolver.define('createAction', async (req) => {
   const res = await createSafetyAction({
     issueKey: key,
     summary: text.length > 120 ? `${text.slice(0, 117)}…` : text,
+    fixText: text,
     description: `${text}\n\nAddresses: ${addresses || 'contributing factors in related reports'}.`,
     strength,
   });

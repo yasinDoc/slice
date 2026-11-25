@@ -113,6 +113,7 @@ function App() {
 
   const { record, similar, signal, slices, ownSlices, protocols } = data;
   const recommendations = data.recommendations || [];
+  const done = { ...(data.existingActions || {}), ...created };
   const stale = protocols.filter((p) => p.stale);
 
   return (
@@ -121,8 +122,8 @@ function App() {
         <SectionMessage appearance="warning" title={`Signal: ${signal.title}`}>
           <Text>
             The holes are lining up. This report is one of {signal.count} similar reports
-            {signal.harmCount ? `, ${signal.harmCount} of which reached the patient` : ''}. Ask the
-            Slice agent in Rovo to "draft an RCA for {record.key}".
+            {signal.harmCount ? `, ${signal.harmCount} of which reached the patient` : ''}. Review the
+            fixes below, or publish a brief for the safety committee from the Slice safety signals page.
           </Text>
         </SectionMessage>
       ) : similar.length ? (
@@ -169,8 +170,8 @@ function App() {
                 <Text size="small" color="color.text.subtlest">{`addresses: ${r.addresses}`}</Text>
               </Inline>
               <Text>{r.text}</Text>
-              {created[r.text] ? (
-                <Link href={`/browse/${created[r.text]}`}>{`Created ${created[r.text]}`}</Link>
+              {done[r.text] ? (
+                <Link href={`/browse/${done[r.text]}`}>{`Created ${done[r.text]}`}</Link>
               ) : (
                 <Inline>
                 <Button

@@ -67,7 +67,7 @@ export async function onIssueEvent(event) {
       'Where the holes are lining up:',
       holes || '• (no contributing factors recorded yet)',
       '',
-      'Open the Slice panel or ask the Slice agent in Rovo to "draft an RCA" for this report. This is a pattern alert for the safety team, not a judgement about any individual.',
+      'Open the Slice panel on this report for the layers, similar reports and recommended fixes (or ask the Slice agent in Rovo, where available). This is a pattern alert for the safety team, not a judgement about any individual.',
     ].join('\n')
   );
   await addLabel(record.key, 'slice-signal').catch((e) => console.warn('label failed', e.message));
