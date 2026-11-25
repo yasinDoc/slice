@@ -20,8 +20,12 @@ works out which layers had holes, and tells you when the same holes keep appeari
 > *The slice that held: smart-pump dose limit. Related protocol: last reviewed 56 months ago (stale).*
 > *Strongest fix: enforce smart-pump hard limits for this drug and concentration. [Create action]*
 
-Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonus tracks:
-**Best Agents** (Rovo agent, actions and skill) and **Best MCP** (`rovo:mcp`).
+Codegeist 2026 entry · **Apps for Specialized Industries (healthcare)** · bonus track:
+**Best Agents** (Rovo agent, seven actions and a skill).
+
+Every core feature works **without Rovo or any LLM**. The Rovo agent and `rovo:mcp` are included for
+Rovo-enabled sites; they are covered by automated tests but were not demonstrated live, because Rovo
+was unavailable on our test sites.
 
 ## What it does
 
