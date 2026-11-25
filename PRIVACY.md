@@ -11,7 +11,7 @@ identifiers before it stores anything.
 
 ## 1. Who we are
 Slice is developed by an independent developer for the Atlassian Codegeist 2026 hackathon.
-Contact: **[your contact email]**
+Contact: **mdy8750@gmail.com**
 
 For the data Slice handles inside your Atlassian site, **your organisation is the data controller**,
 and Atlassian hosts and processes it under your agreement with Atlassian. The developer has no access
@@ -79,4 +79,4 @@ and is not a medical device. All demo data is synthetic.
 
 ## 9. Changes and contact
 We will update this page if Slice's data handling changes. The date at the top shows the latest
-version. For questions or requests, contact **[your contact email]**.
+version. For questions or requests, contact **mdy8750@gmail.com**.
