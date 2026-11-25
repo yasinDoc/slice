@@ -87,7 +87,7 @@ forge install --product confluence --site your-site.atlassian.net --upgrade
 2. Open the project's **Slice safety signals** page in the sidebar and click **Load demo data** (Jira admins only).
    It creates 34 synthetic near-miss reports and a **Clinical Protocols** Confluence space with 4 protocol pages,
    then indexes everything. It is safe to click twice; nothing is duplicated.
-3. Open **SAFE-5** and look at the **Slice · safety signals** panel: the pump signal, the Swiss cheese layers,
+3. Open **SAFE-5** and look at the **Slice · safety signals** panel (on a fresh install, click the cheese-slices icon above the description once): the pump signal, the Swiss cheese layers,
    recommended fixes, similar reports and the stale protocol.
 4. Create a new report such as *"VitaFlow 300 rate entered wrong again, Ward 6, night shift"* and watch Slice
    comment on it within a minute or two.

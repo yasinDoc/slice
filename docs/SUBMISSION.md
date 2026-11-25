@@ -112,7 +112,7 @@ and staleness, demo protocol space), and **Rovo** (`rovo:agent`, seven `action` 
    You should see *"Demo data ready: 34 reports created … 4 protocol pages in Confluence space CLINPROT."*
 4. The dashboard now shows 4 signals: pumps on Ward 6, potassium in ICU, specimen labelling in the
    emergency department, and falls on Ward 3.
-5. Open **SAFE-5** → the **Slice · safety signals** panel shows the pump signal, the four layers,
+5. Open **SAFE-5** (on a fresh install, click the cheese-slices icon above the description once to add the panel) → the **Slice · safety signals** panel shows the pump signal, the four layers,
    recommended fixes (try **Create action**), similar reports with reasons, and
    *"Infusion pump programming… stale · 56 months"*.
 6. On the dashboard, click **Publish brief to Confluence** on the pump signal and open the link:
