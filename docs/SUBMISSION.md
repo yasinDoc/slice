@@ -166,7 +166,7 @@ All data is synthetic. The devices (VitaFlow 300, LabelJet 2) are fictional.
 
 ## 5. Before you submit
 - [x] `forge deploy -e production` and `forge install` the production version on the demo site
-- [ ] Developer console → Slice → **Distribution** → enable sharing, then copy the **installation link**
-- [ ] Make the GitHub repo public (or give the judges access)
+- [x] Developer console → Slice → **Distribution** → enable sharing, then copy the **installation link** (Jira + Confluence)
+- [x] Make the GitHub repo public: https://github.com/yasinDoc/slice (privacy policy: `PRIVACY.md`)
 - [ ] Record the video and upload it to YouTube as **Public**
 - [ ] Fill in the Devpost form from section 1 and paste the install link and video URL
