@@ -67,8 +67,9 @@ reads them side by side.
 |---|---|
 | `report:<ISSUE-KEY>` | `{ key, summary, text, eventDate, category, location, device, deviceModel, drug, shift, outcome, factors[], defences[], tokens[], redactions }`, all redacted |
 | `alert:<signalId>` | `{ keys[], count, at }`: reports already alerted for this signal (one comment per report) |
-| `settings` | `{ projectKeys: ["SAFE"], commentOnSignal: true, minSignalCount: 3, windowDays: 90 }` |
+| `settings` | `{ projectKeys: ["SAFE"], commentOnSignal: true, minSignalCount: 3, windowDays: 90, thankReporters: true, supportNote: true, supportUrl: "" }` |
 | `action:<ISSUE-KEY>` | `{ key, from, text, strength, createdAt }`: action items Slice created (excluded from indexing via the `slice-action` label) |
+| `thanked:<ACTION-KEY>` | `{ targets[], at }`: reports already thanked for a completed action |
 | `feedback:<ISSUE-KEY>` | `{ notRelated[] }`: matches a user marked "not related", hidden for that report |
 
 ### Similarity
@@ -122,6 +123,26 @@ A held-out evaluation set (`tests/eval-set.js`, 30 reports) is scored on every t
 build fails below 90% for category, location and outcome, below 85% for factor and defence
 recall, or on any negation error. Current results: category 97%, location 100%, outcome 100%,
 factors and defences 100%.
+
+### Closing the loop with reporters
+
+When a Slice action item moves to a *done* status, the trigger finds its source report (Slice's
+record, or the linked report in Jira), finds the signal that report belongs to, and posts one
+thank-you on every report in it: the fix, its key and the pattern, and never any names. Each action
+thanks once (`thanked:<ACTION-KEY>`), and admins can switch it off.
+
+### Staff support ("second victim")
+
+On reports where harm reached the patient, the panel shows a short support note for staff who were
+involved, with an optional link to the organisation's wellbeing service (admin setting, https only).
+
+### Bangla
+
+`src/engine/bangla.js` converts Bangla digits to ASCII, then rewrites Bangla clinical phrases into the
+engine's vocabulary before detection, including Bangla's after-the-verb negation ("ক্লান্ত ছিলেন না" →
+"not tired"). Redaction also covers Bangla honorific names and bed numbers. The stored text keeps its
+language, and the panel tags it **বাংলা**. Because detection runs on the shared vocabulary, a Bangla
+report joins the same signals as English ones.
 
 ### Recommendation strength
 

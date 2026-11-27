@@ -143,7 +143,26 @@ function App() {
         </SectionMessage>
       )}
 
+      {data.support && (
+        <SectionMessage appearance="information" title="Looking after the team">
+          <Text>
+            This incident reached the patient. If you were involved, it is normal to feel affected, and
+            you are not alone. Slice looks at systems, never individuals.
+          </Text>
+          {data.support.url ? (
+            <Link href={data.support.url} openNewTab>
+              Staff support and wellbeing
+            </Link>
+          ) : (
+            <Text size="small" color="color.text.subtle">
+              Talk to your line manager or occupational health. An admin can add a support link in Slice settings.
+            </Text>
+          )}
+        </SectionMessage>
+      )}
+
       <Inline space="space.100" shouldWrap>
+        {record.language === 'bn' && <Lozenge appearance="inprogress">বাংলা</Lozenge>}
         <Lozenge appearance="new">{CATEGORY[record.category] || record.category}</Lozenge>
         {place(record.location) && <Lozenge>{place(record.location)}</Lozenge>}
         {record.device && <Lozenge>{record.device}</Lozenge>}

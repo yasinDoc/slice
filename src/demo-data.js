@@ -173,6 +173,12 @@ export default {
       "date": "2026-11-18",
       "description": "Ward 8. Methotrexate prescribed daily instead of weekly. Pharmacist queried before dispensing. Near miss."
     }
+,
+    {
+      "summary": "পাম্পে হেপারিনের ভুল রেট (VitaFlow 300)",
+      "date": "2026-11-10",
+      "description": "ওয়ার্ড ৬, রাতের শিফট, রাত ২টা। VitaFlow 300 পাম্পে হেপারিনের রেট ১০ গুণ বেশি দেওয়া হয়েছিল, কিপ্যাডে দশমিক বিন্দু বাদ পড়ে যায়। ফোন বেজে ওঠে, আমি ক্লান্ত ছিলাম। পাম্পের অ্যালার্ম বাজে এবং দেওয়ার আগেই ঠিক করা হয়। কোনো ক্ষতি হয়নি। (Bangla report: heparin rate 10x too high on the VitaFlow 300 keypad, interrupted by a phone call, tired; the pump alarm caught it. No harm.)"
+    }
   ],
   "protocols": [
     {

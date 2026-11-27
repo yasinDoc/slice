@@ -21,6 +21,10 @@ const RULES = [
     re: /\b(?<lead>(?:patient|pt)\s+(?:named\s+|called\s+)?)[A-Z][a-z'-]+\s+[A-Z][a-z'-]+/g,
     keepGroup: 'lead',
   },
+  // Bangla honorific + name: "জনাব রহিম", "মিসেস ফাতেমা বেগম"
+  { tag: '[NAME]', re: /(?:জনাব|জনাবা|মিসেস|মিস্টার|মিঃ|মোসাম্মৎ|মোঃ)\s+[ঀ-৿]+(?:\s+[ঀ-৿]+)?/g },
+  // Bangla bed numbers: "বেড ১২" (digits are normalised to ASCII before redaction)
+  { tag: 'bed [N]', re: /বেড\s*(?:নং\.?\s*)?\d+/g },
   // Bed / room numbers can identify a patient on a given night
   { tag: 'bed [N]', re: /\bbed\s*(?:no\.?\s*)?\d+[A-Z]?\b/gi },
   { tag: 'room [N]', re: /\broom\s*\d+[A-Z]?\b/gi },

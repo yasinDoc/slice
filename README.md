@@ -59,6 +59,9 @@ report, works out which layers had holes, and tells you when the same holes keep
 | 📄 **Checks protocols** | Finds the relevant Confluence protocols and flags any not reviewed in 24 months |
 | 🛠️ **Recommends fixes** | System-level fixes ranked by the safety action hierarchy: strong (redesign) before intermediate (checks) before weak (training) |
 | ✅ **Turns them into work** | One click creates a linked Jira action item, after a human agrees |
+| 🙏 **Thanks the reporters** | When a fix from a pattern is done, every report in that pattern gets a note: *"Your report made a difference"*. Never names anyone |
+| 💛 **Looks after staff** | Reports where harm reached the patient show a gentle staff-support note, with an optional link to your wellbeing service |
+| 🇧🇩 **Understands Bangla** | Reports written in Bangla (বাংলা) are understood, redacted and matched into the same signals as English ones |
 | 🔁 **Closes the loop** | Each signal tracks its action items, their live status, and **did it work?**: recurrence since the first action vs the same period before |
 | 📝 **Briefs the committee** | One click publishes a Confluence **safety signal brief**: layers, defences that held, ranked fixes, stale protocols, a timeline linked to Jira, and a decision checklist |
 | 📊 **Shows the big picture** | A project dashboard: active signals, Swiss cheese profile, top causes, defences that held, weekly trend, latest reports |
@@ -72,7 +75,7 @@ report, works out which layers had holes, and tells you when the same holes keep
 | **Slice safety signals** in the project sidebar | The dashboard: tiles, signal cards with actions, *did it work?* and **Publish brief to Confluence**, charts, latest reports |
 | **Comments** on new reports | 🧀 signal alert with related reports and the layers that keep failing |
 | **Confluence** | Signal briefs and the *Clinical Protocols* space |
-| **Settings** (Administration → Connected apps → Slice → ⋯ → Configure) | Safety projects, signal threshold, look-back window, comments on/off, **Load demo data** |
+| **Settings** (Administration → Connected apps → Slice → ⋯ → Configure) | Safety projects, signal threshold, look-back window, comments, reporter thank-yous, staff support note and link, **Load demo data** |
 
 ## Screenshots
 
@@ -86,6 +89,9 @@ report, works out which layers had holes, and tells you when the same holes keep
   <tr>
     <td width="50%"><img src="docs/img/brief.jpg" alt="Safety signal brief published to Confluence with a Swiss cheese table and the defences that held"><br><sub><b>Confluence brief:</b> one click, ready for the safety committee</sub></td>
     <td width="50%"><img src="docs/img/comment.jpg" alt="Slice comment on a new Jira report: signal title, related reports and the layers where the holes are lining up"><br><sub><b>Alert in context:</b> a new report joins the pattern, and Slice says so without blaming anyone</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/img/bangla.jpg" alt="A near-miss report written in Bangla, analysed by Slice: tagged বাংলা, heparin, Ward 6, night shift, and joined to the 7-report VitaFlow 300 pump signal"><br><sub><b>Bangla report:</b> written in বাংলা, understood by Slice and joined to the same pump signal as the English reports</sub></td>
   </tr>
 </table>
 
@@ -127,8 +133,10 @@ Full details: [docs/DESIGN.md](docs/DESIGN.md) (data model, scoring, signal rule
 ## Accuracy
 
 Slice's extraction is measured on a **held-out evaluation set** ([`tests/eval-set.js`](tests/eval-set.js)):
-30 near-miss reports written independently of the demo data, in varied wording and shorthand, labelled
-the way a patient-safety reviewer would. CI fails if accuracy drops below the thresholds.
+30 English near-miss reports written independently of the demo data, in varied wording and shorthand,
+labelled the way a patient-safety reviewer would, plus 6 Bangla reports. CI fails if accuracy drops
+below the thresholds. (The Bangla cases were written alongside the Bangla vocabulary, so they show it
+works but are not as independent as the English set.)
 
 | Measure | Result | Threshold |
 |---|---|---|
@@ -137,6 +145,7 @@ the way a patient-safety reviewer would. CI fails if accuracy drops below the th
 | Outcome (near-miss / no-harm / harm) | **100%** | ≥ 90% |
 | Contributing factors and defences found | **100%** | ≥ 85% |
 | Negated phrases wrongly counted | **0** | must be 0 |
+| Bangla reports fully correct (6) | **100%** | ≥ 80% |
 
 Building the set found real weaknesses, and each one is now fixed: drug names did not count towards
 *medication*, *"no double check was done"* was read as a defence that held, *"a CT showing a bleed"*
@@ -158,7 +167,7 @@ Requirements: **Node 22.3+** and, to deploy, the [Forge CLI](https://developer.a
 
 ```bash
 npm install
-npm test         # 47 tests: engine, held-out accuracy, Forge integration (mocked Jira, Confluence, KVS), demo loader
+npm test         # 55 tests: engine, held-out accuracy, Forge integration (mocked Jira, Confluence, KVS), demo loader
 npm run demo     # run the engine on the demo data offline: signals plus a sample RCA
 ```
 
@@ -214,8 +223,8 @@ tests/                  engine, held-out accuracy (eval-set.js), Forge integrati
   automated tests but were not demonstrated live. Everything else is verified on a live production install.
 - Redaction is pattern-based. It catches common identifiers but cannot guarantee every one, so local
   policy should still keep patient details out of near-miss reports.
-- The lexicon is English. The held-out evaluation shows it generalises beyond the demo data, but
-  real deployments would still extend it with local terms, devices and drugs.
+- The vocabulary covers English and Bangla. The held-out evaluation shows it generalises beyond the
+  demo data, but real deployments would still extend it with local terms, devices and drugs.
 - *Did it work?* compares simple counts over equal windows. It is a prompt for discussion, not a
   statistical test.
 

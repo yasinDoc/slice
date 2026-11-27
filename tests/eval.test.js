@@ -29,12 +29,18 @@ const metrics = {
   fullyCorrect: rate((x) => x.misses.length === 0),
 };
 
+const bangla = results.filter((x) => x.c.lang === 'bn');
+const banglaFully = bangla.length ? bangla.filter((x) => x.misses.length === 0).length / bangla.length : 1;
+
 test('evaluation report', () => {
   const pct = (v) => `${Math.round(v * 100)}%`;
   console.log(`\n  Held-out evaluation (${cases.length} reports)`);
   for (const [k, v] of Object.entries(metrics)) console.log(`    ${k.padEnd(20)} ${pct(v)}`);
+  console.log(`    ${'bangla fully correct'.padEnd(20)} ${pct(banglaFully)} (${bangla.length} reports)`);
   for (const x of results.filter((y) => y.misses.length)) console.log(`    #${x.i}: ${x.misses.join('; ')}`);
 });
+
+test('Bangla reports: at least 80% fully correct', () => assert.ok(banglaFully >= 0.8, `bangla ${banglaFully}`));
 
 test('category accuracy ≥ 90%', () => assert.ok(metrics.category >= 0.9, `category ${metrics.category}`));
 test('location accuracy ≥ 90%', () => assert.ok(metrics.location >= 0.9, `location ${metrics.location}`));

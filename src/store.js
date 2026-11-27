@@ -6,6 +6,9 @@ export const DEFAULT_SETTINGS = {
   commentOnSignal: true,
   minSignalCount: 3,
   windowDays: 90,
+  thankReporters: true,
+  supportNote: true,
+  supportUrl: '',
 };
 
 export async function getSettings() {
@@ -33,6 +36,15 @@ export function validateSettings(input) {
   if (input.minSignalCount !== undefined) out.minSignalCount = int(input.minSignalCount, 2, 20, 'Reports per signal');
   if (input.windowDays !== undefined) out.windowDays = int(input.windowDays, 14, 365, 'Look-back window');
   if (input.commentOnSignal !== undefined) out.commentOnSignal = Boolean(input.commentOnSignal);
+  if (input.thankReporters !== undefined) out.thankReporters = Boolean(input.thankReporters);
+  if (input.supportNote !== undefined) out.supportNote = Boolean(input.supportNote);
+  if (input.supportUrl !== undefined) {
+    const url = String(input.supportUrl).trim();
+    if (url && (!/^https:\/\/[^\s"'<>]{3,300}$/.test(url))) {
+      throw new Error('Staff support link must be an https:// address.');
+    }
+    out.supportUrl = url;
+  }
   return out;
 }
 
@@ -81,6 +93,9 @@ export async function markNotRelated(key, otherKey) {
 /** Action items Slice created: { key, from, text, strength, createdAt }. */
 export const saveActionItem = (item) => kvs.set(`action:${item.key}`, item);
 export const getActionItem = (key) => kvs.get(`action:${key}`);
+/** Action items whose reporters have already been thanked (once per action). */
+export const getThanked = (key) => kvs.get(`thanked:${key}`);
+export const saveThanked = (key, value) => kvs.set(`thanked:${key}`, value);
 
 export async function allActionItems() {
   const out = [];

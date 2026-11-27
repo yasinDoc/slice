@@ -130,4 +130,36 @@ export default [
     text: 'VitaFlow 300 heparin rate entered wrong again. Ward 6, night shift 03:00. Heparin rate entered 10x too high on the VitaFlow 300 keypad, was interrupted. Second nurse double-checked and caught it.',
     category: 'infusion', location: 'ward-6', outcome: 'near-miss', factors: ['interruption', 'device-ux'], defences: ['double-check'],
   },
+  // Bangla (বাংলা) reports: same labels, written as staff in Bangladesh might write them.
+  {
+    lang: 'bn',
+    text: 'ওয়ার্ড ৩-এ রাত ২টায় এক বয়স্ক রোগী বাথরুমে পড়ে যান। বেড অ্যালার্ম বন্ধ ছিল এবং কল বেল নাগালের বাইরে ছিল। হাতে সামান্য কালশিটে পড়েছে।',
+    category: 'falls', location: 'ward-3', outcome: 'harm', factors: ['alarm-off'], defences: [],
+  },
+  {
+    lang: 'bn',
+    text: 'আইসিইউ-তে পটাশিয়াম ক্লোরাইডের ১০ ও ২০ মিলিমোল অ্যাম্পুল দেখতে একই রকম এবং একই ড্রয়ারে রাখা। ভুল অ্যাম্পুল নেওয়া হয়েছিল, কিন্তু ফার্মাসিস্ট প্রশ্ন তোলেন, দেওয়ার আগেই।',
+    category: 'medication', location: 'icu', outcome: 'near-miss', factors: ['look-alike', 'storage-design'], defences: ['pharmacist'],
+  },
+  {
+    lang: 'bn',
+    text: 'জরুরি বিভাগে কয়েকজন রোগীর লেবেল আগে থেকে প্রিন্ট করা ছিল; একটি রক্তের নমুনায় ভুল লেবেল লাগানো হয়। ল্যাব নমুনা ফেরত দেয়।',
+    category: 'specimen', location: 'ed', outcome: 'near-miss', factors: ['batching', 'mislabel'], defences: ['lab'],
+  },
+  {
+    lang: 'bn',
+    text: 'ওয়ার্ড ৫-এ ইনসুলিনের ভুল ডোজ প্রায় দেওয়া হচ্ছিল। আমি ক্লান্ত ছিলাম না এবং মনোযোগ বিঘ্নিত হয়নি; প্রেসক্রিপশন অস্পষ্ট ছিল। দ্বিতীয় নার্স ধরে ফেলেন।',
+    category: 'medication', location: 'ward-5', outcome: 'near-miss', factors: ['wrong-dose'], defences: ['double-check'],
+    notFactors: ['fatigue', 'interruption'],
+  },
+  {
+    lang: 'bn',
+    text: 'ওয়ার্ড ৯-এ জেন্টামাইসিন ভুল রোগী-কে প্রায় দেওয়া হচ্ছিল; বারকোড স্ক্যানে মিল পাওয়া যায়নি।',
+    category: 'medication', location: 'ward-9', outcome: 'near-miss', factors: ['wrong-patient'], defences: ['barcode'],
+  },
+  {
+    lang: 'bn',
+    text: 'জরুরি বিভাগে সকালের চেকে রিসাস ট্রলির ডিফিব্রিলেটরের ব্যাটারি ফ্ল্যাট পাওয়া যায়। বদলে দেওয়া হয়েছে।',
+    category: 'equipment', location: 'ed', outcome: 'near-miss', factors: ['equipment-fault'], defences: [],
+  },
 ];

@@ -6,6 +6,7 @@ import seed from '../src/demo-data.js';
 
 const issues = [];
 const pages = [];
+const comments = [];
 const labels = [];
 let spaceExists = false;
 let isAdmin = true;
@@ -32,6 +33,10 @@ const product = {
       const key = `SAFE-${issues.length + 1}`;
       issues.push({ key, fields: { ...f, project: { key: 'SAFE' }, status: { name: 'To Do', statusCategory: { key: 'new' } } } });
       return json({ key }, 201);
+    }
+    if (/^\/rest\/api\/3\/issue\/SAFE-\d+\/comment$/.test(p)) {
+      comments.push({ key: p.match(/SAFE-\d+/)[0], text: JSON.stringify(JSON.parse(init.body).body) });
+      return json({ id: String(comments.length) }, 201);
     }
     if (p === '/rest/api/3/issueLink') {
       const { inwardIssue, outwardIssue } = JSON.parse(init.body);
@@ -228,4 +233,52 @@ test('panel finds existing actions from Jira links even if Slice storage was res
   store.delete(`action:${made.created}`); // simulate a reinstall wiping Slice's records
   const after = await call('getPanel', { issueKey: 'SAFE-4' });
   assert.equal(after.existingActions[fix], made.created);
+});
+
+test('when a fix is done, every report in the pattern is thanked once', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const dash = await call('getDashboard', { projectKey: 'SAFE' });
+  const pump = dash.signals.find((x) => /VitaFlow 300/.test(x.title));
+  const made = await call('createAction', { issueKey: 'SAFE-5', text: 'Enforce smart-pump hard limits', strength: 'strong', addresses: 'x' });
+  const action = issues.find((i) => i.key === made.created);
+  // Not done yet: nothing happens.
+  await app.onIssueEvent({ eventType: 'avi:jira:updated:issue', issue: { key: made.created, fields: { project: { key: 'SAFE' } } } });
+  assert.equal(comments.filter((c) => c.text.includes(made.created)).length, 0);
+  // Done: every report in the pump signal gets one thank-you that names the fix, not people.
+  action.fields.status = { name: 'Done', statusCategory: { key: 'done' } };
+  await app.onIssueEvent({ eventType: 'avi:jira:updated:issue', issue: { key: made.created, fields: { project: { key: 'SAFE' } } } });
+  const thanks = comments.filter((c) => c.text.includes(made.created));
+  assert.deepEqual(thanks.map((c) => c.key).sort(), [...pump.keys].sort());
+  assert.ok(thanks[0].text.includes('Your report made a difference'));
+  assert.ok(thanks[0].text.includes('Enforce smart-pump hard limits'));
+  // A retried event does not thank twice.
+  await app.onIssueEvent({ eventType: 'avi:jira:updated:issue', issue: { key: made.created, fields: { project: { key: 'SAFE' } } } });
+  assert.equal(comments.filter((c) => c.text.includes(made.created)).length, pump.keys.length);
+  assert.ok(!store.has(`report:${made.created}`), 'the action item itself is never indexed');
+});
+
+test('thank-yous can be switched off', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  await call('saveSettings', { thankReporters: false });
+  const made = await call('createAction', { issueKey: 'SAFE-10', text: 'Bedside label printing', strength: 'strong', addresses: 'x' });
+  issues.find((i) => i.key === made.created).fields.status = { name: 'Done', statusCategory: { key: 'done' } };
+  await app.onIssueEvent({ eventType: 'avi:jira:updated:issue', issue: { key: made.created, fields: { project: { key: 'SAFE' } } } });
+  assert.equal(comments.filter((c) => c.text.includes(made.created)).length, 0);
+  await call('saveSettings', { thankReporters: true });
+});
+
+test('harm reports show a staff support note; near-misses do not', async () => {
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const harmKey = [...store.values()].find((r) => r && r.outcome === 'harm')?.key;
+  assert.ok(harmKey, 'demo data has a harm report');
+  let panel = await call('getPanel', { issueKey: harmKey });
+  assert.deepEqual(panel.support, { url: null });
+  await call('saveSettings', { supportUrl: 'https://intranet.example.org/wellbeing' });
+  panel = await call('getPanel', { issueKey: harmKey });
+  assert.equal(panel.support.url, 'https://intranet.example.org/wellbeing');
+  assert.equal((await call('getPanel', { issueKey: 'SAFE-5' })).support, null);
+  await assert.rejects(call('saveSettings', { supportUrl: 'http://not-secure.example.org' }), /https/);
+  await call('saveSettings', { supportNote: false });
+  assert.equal((await call('getPanel', { issueKey: harmKey })).support, null);
+  await call('saveSettings', { supportNote: true, supportUrl: '' });
 });

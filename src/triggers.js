@@ -1,8 +1,8 @@
 // Product event handlers: index new or edited safety reports and raise signals.
-import { indexIssue, isSafetyProject, safetyRecords } from './analysis.js';
-import { getSettings, getAlert, saveAlert, deleteRecord } from './store.js';
-import { signalsForRecord } from './engine/index.js';
-import { addComment, addLabel } from './atlassian.js';
+import { indexIssue, isSafetyProject, safetyRecords, isActionItem } from './analysis.js';
+import { getSettings, getAlert, saveAlert, deleteRecord, getActionItem, getThanked, saveThanked } from './store.js';
+import { signalsForRecord, thankYouMessage, isDone } from './engine/index.js';
+import { addComment, addLabel, getIssue } from './atlassian.js';
 
 const appUrl = (key) => key; // Jira auto-links issue keys in comments.
 
@@ -20,11 +20,13 @@ export async function onIssueEvent(event) {
   }
 
   // Event payloads can omit fields, so fetch the issue fresh.
-  const record = await indexIssue(issue.key);
-  if (!record) {
-    console.log(`slice trigger: ${issue.key} is a Slice action item; not indexed`);
+  const full = await getIssue(issue.key);
+  if (isActionItem(full)) {
+    await deleteRecord(full.key);
+    await thankReportersIfDone(full);
     return;
   }
+  const record = await indexIssue(full);
   const settings = await getSettings();
   if (!settings.commentOnSignal) return;
 
@@ -71,4 +73,46 @@ export async function onIssueEvent(event) {
     ].join('\n')
   );
   await addLabel(record.key, 'slice-signal').catch((e) => console.warn('label failed', e.message));
+}
+
+/**
+ * When a Slice action item is done, thank every report in the pattern it came from.
+ * Runs once per action item, and only if the setting is on.
+ */
+export async function thankReportersIfDone(action) {
+  if (!isDone(action)) return;
+  const settings = await getSettings();
+  if (!settings.thankReporters) return;
+  if (await getThanked(action.key)) return;
+
+  // The source report: Slice's own record, or failing that a linked safety report.
+  const item = await getActionItem(action.key);
+  const linked = (action.fields?.issuelinks || [])
+    .map((l) => (l.inwardIssue || l.outwardIssue)?.key)
+    .filter(Boolean);
+  const records = await safetyRecords();
+  const from = item?.from || linked.find((k) => records.some((r) => r.key === k));
+  if (!from) return;
+
+  const source = records.find((r) => r.key === from);
+  const [signal] = source
+    ? signalsForRecord(source, records, {
+        windowDays: settings.windowDays,
+        minSignalCount: settings.minSignalCount,
+        asOf: new Date().toISOString().slice(0, 10),
+      })
+    : [];
+  const targets = signal ? signal.keys : [from];
+  const message = thankYouMessage({
+    fixText: item?.text || action.fields?.summary || 'a system fix',
+    actionKey: action.key,
+    signalTitle: signal?.title,
+    reportCount: targets.length,
+  });
+  // Mark first so a retried event cannot post twice.
+  await saveThanked(action.key, { targets, at: new Date().toISOString() });
+  for (const key of targets) {
+    await addComment(key, message).catch((e) => console.warn(`thank-you on ${key} failed`, e.message));
+  }
+  console.log(`slice trigger: thanked ${targets.length} reports for ${action.key}`);
 }

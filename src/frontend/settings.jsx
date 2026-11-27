@@ -43,6 +43,9 @@ function App() {
         minSignalCount: Number(form.minSignalCount),
         windowDays: Number(form.windowDays),
         commentOnSignal: form.commentOnSignal,
+        thankReporters: form.thankReporters,
+        supportNote: form.supportNote,
+        supportUrl: form.supportUrl || '',
       });
       setForm({ ...settings, projectKeys: settings.projectKeys.join(', ') });
       setMsg({ type: 'success', text: 'Saved. Open the Slice dashboard and click "Re-index all reports" to apply new projects.' });
@@ -85,6 +88,22 @@ function App() {
         <Toggle id="commentOnSignal" isChecked={form.commentOnSignal} onChange={() => setForm({ ...form, commentOnSignal: !form.commentOnSignal })} isDisabled={!isAdmin} />
         <Label labelFor="commentOnSignal">Comment on a report when it joins a signal</Label>
       </Inline>
+
+      <Inline space="space.100" alignBlock="center">
+        <Toggle id="thankReporters" isChecked={form.thankReporters} onChange={() => setForm({ ...form, thankReporters: !form.thankReporters })} isDisabled={!isAdmin} />
+        <Label labelFor="thankReporters">Thank reporters when a fix from their pattern is done</Label>
+      </Inline>
+
+      <Inline space="space.100" alignBlock="center">
+        <Toggle id="supportNote" isChecked={form.supportNote} onChange={() => setForm({ ...form, supportNote: !form.supportNote })} isDisabled={!isAdmin} />
+        <Label labelFor="supportNote">Show a staff support note on reports where harm reached the patient</Label>
+      </Inline>
+
+      <Stack space="space.100">
+        <Label labelFor="supportUrl">Staff support link (optional)</Label>
+        <Textfield id="supportUrl" value={form.supportUrl || ''} onChange={set('supportUrl')} isDisabled={!isAdmin} placeholder="https://intranet.example.org/staff-wellbeing" />
+        <HelperMessage>Your organisation's wellbeing or peer-support page. Must start with https://</HelperMessage>
+      </Stack>
 
       {msg && (
         <SectionMessage appearance={msg.type}>

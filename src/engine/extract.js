@@ -2,6 +2,7 @@
 import { CATEGORIES, LOCATIONS, DEVICES, DRUGS, FACTORS, DEFENCES } from './lexicon.js';
 import { redact } from './redact.js';
 import { topTokens } from './text.js';
+import { translateBangla, normaliseDigits, hasBangla } from './bangla.js';
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 // Whole-word match that also accepts a simple plural ("wristband" matches "wristbands").
@@ -168,15 +169,18 @@ export const detectDefences = (text) => DEFENCES.filter((d) => affirmed(d.re, te
  * unredacted is returned.
  */
 export function buildRecord({ key, summary, description, created, projectKey }) {
-  const s = redact(summary);
-  const d = redact(description);
-  const text = expandShorthand(`${s.text}\n${d.text}`);
+  // Bangla digits become ASCII first, so redaction catches Bangla phone and record numbers.
+  const s = redact(normaliseDigits(summary));
+  const d = redact(normaliseDigits(description));
+  // Detection runs on an English-normalised copy; the stored text keeps its language.
+  const text = expandShorthand(translateBangla(`${s.text}\n${d.text}`));
   const { device, deviceModel } = detectDevice(text);
   // The event date is not an identifier on its own; read it from the raw text.
-  const eventDate = detectEventDate(`${summary || ''}\n${description || ''}`, created);
+  const eventDate = detectEventDate(normaliseDigits(`${summary || ''}\n${description || ''}`), created);
   return {
     key,
     projectKey: projectKey || (key ? String(key).split('-')[0] : null),
+    language: hasBangla(`${summary || ''}${description || ''}`) ? 'bn' : 'en',
     summary: s.text.slice(0, 255),
     text: d.text.slice(0, 2000),
     eventDate,

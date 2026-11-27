@@ -19,6 +19,7 @@ import {
   buildSignalBrief,
   actionImpact,
   describeImpact,
+  thankYouMessage,
 } from '../src/engine/index.js';
 
 const records = seed.reports.map((r, i) =>
@@ -158,7 +159,7 @@ test('signal brief has every section, escapes text and links reports', () => {
   assert.ok(brief.body.includes('&lt;script&gt;'));
   assert.ok(brief.body.includes('https://site.atlassian.net/browse/SAFE-1'));
   assert.ok(brief.body.includes('stale · 56 months'));
-  assert.equal(brief.reports, 5);
+  assert.equal(brief.reports, 6); // 5 English reports + 1 Bangla report in the same pattern
   assert.ok(brief.body.indexOf('>strong<') < brief.body.indexOf('>intermediate<'));
 });
 
@@ -187,6 +188,14 @@ test('negated phrases are not counted as factors or defences', () => {
   assert.ok(rec('No harm. I was interrupted by a bleep.').factors.includes('interruption'));
 });
 
+test('thank-you message names the fix and the pattern, never people', () => {
+  const m = thankYouMessage({ fixText: 'Enforce pump hard limits', actionKey: 'SAFE-70', signalTitle: '6 infusion reports on Ward 6', reportCount: 6 });
+  assert.match(m, /This report and 5 others in the pattern "6 infusion reports on Ward 6"/);
+  assert.match(m, /Enforce pump hard limits \(SAFE-70\)/);
+  assert.match(thankYouMessage({ fixText: 'x', actionKey: 'K-1' }), /^🙏.*\nThis report led to/);
+  assert.match(thankYouMessage({ fixText: 'x', actionKey: 'K-1', signalTitle: 't', reportCount: 2 }), /and 1 other in/);
+});
+
 test('weekStart returns the Monday of the week', () => {
   assert.equal(weekStart('2026-11-19'), '2026-11-16');
   assert.equal(weekStart('2026-11-16'), '2026-11-16');
@@ -196,4 +205,42 @@ test('weekStart returns the Monday of the week', () => {
 test('adfToText flattens Atlassian Document Format', () => {
   const adf = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ward 6' }, { type: 'hardBreak' }, { type: 'text', text: 'pump' }] }] };
   assert.equal(adfToText(adf).trim(), 'Ward 6\npump');
+});
+
+test('Bangla: digits, redaction and facets', () => {
+  const r = buildRecord({
+    key: 'SAFE-90',
+    summary: 'পাম্পে ভুল রেট (VitaFlow 300)',
+    description: 'Date of event: ২০২৬-১১-১০\nওয়ার্ড ৬, রাতের শিফট। VitaFlow 300 পাম্পে হেপারিনের রেট ১০ গুণ বেশি, কিপ্যাডে দশমিক বিন্দু বাদ পড়ে যায়। ফোন বেজে ওঠে। দ্বিতীয় নার্স ধরে ফেলেন, দেওয়ার আগেই। রোগী মিসেস ফাতেমা বেগম, বেড ১২, ফোন ০১৭১১২৩৪৫৬৭।',
+  });
+  assert.equal(r.language, 'bn');
+  assert.equal(r.eventDate, '2026-11-10');
+  assert.equal(r.category, 'infusion');
+  assert.equal(r.location, 'ward-6');
+  assert.equal(r.deviceModel, 'VitaFlow 300');
+  assert.equal(r.drug, 'heparin');
+  assert.equal(r.shift, 'night');
+  assert.ok(r.factors.includes('interruption') && r.factors.includes('device-ux'));
+  assert.ok(!r.factors.includes('omission'), 'a skipped decimal point is a keypad slip, not an omitted step');
+  assert.deepEqual(r.defences, ['double-check']);
+  assert.ok(!/ফাতেমা|01711234567|বেড 12/.test(JSON.stringify(r)), 'Bangla name, phone and bed are redacted');
+  assert.match(r.text, /\[NAME\]/);
+});
+
+test('Bangla: a fall verb is not confused with "got skipped"', () => {
+  const r = buildRecord({ key: 'T-1', summary: '', description: 'ডোজের সময় বাদ পড়ে যায়। কোনো ক্ষতি হয়নি।' });
+  assert.notEqual(r.category, 'falls');
+  assert.equal(r.outcome, 'near-miss');
+});
+
+test('Bangla report joins the English signal for the same pattern', () => {
+  const bn = buildRecord({
+    key: 'SAFE-90',
+    summary: 'পাম্পে ভুল রেট (VitaFlow 300)',
+    description: 'Date of event: 2026-11-10\nওয়ার্ড ৬, রাতের শিফট। VitaFlow 300 পাম্পে ইনসুলিনের রেট ১০ গুণ বেশি দেওয়া হয়েছিল, কিপ্যাডে দশমিক বিন্দু বাদ পড়ে যায়। পাম্পের অ্যালার্ম বাজে।',
+  });
+  const sims = findSimilar(bn, records).map((m) => m.record.key);
+  for (const k of ['SAFE-1', 'SAFE-2', 'SAFE-3', 'SAFE-5']) assert.ok(sims.includes(k), `${k} missing: ${sims}`);
+  const [sig] = signalsForRecord(bn, [...records, bn], { asOf: '2026-11-20' });
+  assert.ok(sig && /VitaFlow 300/.test(sig.title) && sig.keys.includes('SAFE-90'));
 });

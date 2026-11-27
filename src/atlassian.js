@@ -11,7 +11,7 @@ async function ok(res, what) {
   return res.status === 204 ? null : res.json();
 }
 
-const ISSUE_FIELDS = 'summary,description,created,project,labels,status,issuetype';
+const ISSUE_FIELDS = 'summary,description,created,project,labels,status,issuetype,issuelinks';
 
 export async function getIssue(key, { asUser = false } = {}) {
   const res = await as(asUser).requestJira(route`/rest/api/3/issue/${key}?fields=${ISSUE_FIELDS}`);

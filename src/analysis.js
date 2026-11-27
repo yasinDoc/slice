@@ -107,6 +107,7 @@ const brief = (r) => ({
   drug: r.drug,
   shift: r.shift,
   outcome: r.outcome,
+  language: r.language || 'en',
 });
 
 export async function similarFor(key, { limit = 8, checkVisibility = true } = {}) {
@@ -156,6 +157,11 @@ export async function panelData(key) {
   const clusterSlices = sliceProfile([record, ...matches.map((m) => m.record)]);
   return {
     recommendations: recommend(clusterSlices).slice(0, 4),
+    // Looking after staff involved in harm ("second victim" support).
+    support:
+      settings.supportNote && (record.outcome === 'harm' || record.outcome === 'severe-harm')
+        ? { url: settings.supportUrl || null }
+        : null,
     // Fixes that already have an action item from this report (text -> issue key),
     // so the panel shows "Created SAFE-70" instead of offering a duplicate.
     existingActions: await existingActionsFor(key, recommend(clusterSlices).slice(0, 4)),
