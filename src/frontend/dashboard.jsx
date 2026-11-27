@@ -331,7 +331,7 @@ function App() {
                   { key: 'where', content: place(r.location) },
                   {
                     key: 'outcome',
-                    content: <Lozenge appearance={r.outcome === 'near-miss' ? 'success' : 'removed'}>{r.outcome}</Lozenge>,
+                    content: <Lozenge appearance={r.outcome === 'near-miss' ? 'success' : r.outcome === 'no-harm' ? 'moved' : 'removed'}>{r.outcome}</Lozenge>,
                   },
                 ],
               }))}

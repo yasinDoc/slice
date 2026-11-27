@@ -100,6 +100,13 @@ function App() {
       </SectionMessage>
     );
 
+  if (data.notWatched)
+    return (
+      <Text size="small" color="color.text.subtle">
+        {`Slice only analyses safety-report projects. ${data.projectKey} isn't one. A Jira admin can add it in Slice settings.`}
+      </Text>
+    );
+
   if (data.actionItem)
     return (
       <SectionMessage appearance="information" title="Slice action item">
@@ -142,7 +149,7 @@ function App() {
         {record.device && <Lozenge>{record.device}</Lozenge>}
         {record.drug && <Lozenge>{record.drug}</Lozenge>}
         {record.shift && <Lozenge>{record.shift} shift</Lozenge>}
-        <Lozenge appearance={record.outcome === 'near-miss' ? 'success' : 'removed'}>{record.outcome}</Lozenge>
+        <Lozenge appearance={record.outcome === 'near-miss' ? 'success' : record.outcome === 'no-harm' ? 'moved' : 'removed'}>{record.outcome}</Lozenge>
         {record.redactions > 0 && <Badge appearance="primary">{`${record.redactions} identifiers redacted`}</Badge>}
       </Inline>
 

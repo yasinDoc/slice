@@ -14,12 +14,13 @@ export const CATEGORIES = [
   {
     id: 'infusion',
     label: 'Infusion / IV pump',
-    keywords: ['infusion', 'pump', 'syringe driver', 'ml/hr', 'ml/h', 'rate', 'iv line', 'drip', 'pca', 'bolus'],
+    keywords: ['infusion', 'pump', 'syringe driver', 'ml/hr', 'ml/h', 'rate', 'iv line', 'drip', 'pca', 'bolus', 'keypad', 'programmed', 'programming'],
   },
   {
     id: 'medication',
     label: 'Medication',
-    keywords: ['dose', 'drug', 'medication', 'medicine', 'tablet', 'vial', 'ampoule', 'prescription', 'prescribed', 'mar chart', 'pharmacy', 'administered', 'insulin', 'heparin', 'potassium', 'morphine', 'antibiotic'],
+    // Named drugs are scored separately (see DRUGS), so they are not repeated here.
+    keywords: ['dose', 'drug', 'medication', 'medicine', 'tablet', 'vial', 'ampoule', 'prescription', 'prescribed', 'mar chart', 'pharmacy', 'administered', 'antibiotic', 'drug chart'],
   },
   {
     id: 'specimen',
@@ -96,8 +97,8 @@ export const DRUGS = [
 /** Contributing factors, each mapped to a Swiss cheese layer. */
 export const FACTORS = [
   // Organisation
-  { id: 'staffing', layer: 'organisation', label: 'Short staffing / high workload', re: /\b(?:short[- ]staffed|understaffed|staff shortage|one nurse (?:for|covering)|high workload|too many patients|no cover|agency staff|bank staff)\b/i },
-  { id: 'protocol-gap', layer: 'organisation', label: 'Unclear or missing protocol', re: /\b(?:no (?:clear )?(?:protocol|policy|guideline|sop)|protocol (?:unclear|out of date|outdated)|unclear (?:protocol|policy|process)|not sure (?:of|about) the (?:process|protocol))\b/i },
+  { id: 'staffing', layer: 'organisation', label: 'Short staffing / high workload', re: /\b(?:short[- ]staffed|understaffed|staff shortage|one nurse (?:for|covering)|(?:covering|looking after|caring for) \d{1,2} patients|high workload|too many patients|no cover|agency (?:staff|nurse)|bank (?:staff|nurse))\b/i },
+  { id: 'protocol-gap', layer: 'organisation', label: 'Unclear or missing protocol', re: /\b(?:no (?:clear )?(?:protocol|policy|guideline|sop|process|procedure)|protocol (?:unclear|out of date|outdated)|unclear (?:protocol|policy|process)|not sure (?:of|about) the (?:process|protocol))\b/i },
   { id: 'training-gap', layer: 'organisation', label: 'No training on device / process', re: /\b(?:not trained|no training|untrained|never been shown|first time using|unfamiliar with)\b/i },
   { id: 'storage-design', layer: 'organisation', label: 'Storage / layout design', re: /\b(?:stored (?:together|next to|in the same)|same (?:drawer|shelf|bin|cupboard)|next to each other on the shelf|(?:are|were) next to each other|on the same shelf)\b/i },
   // Supervision
@@ -109,21 +110,21 @@ export const FACTORS = [
   { id: 'interruption', layer: 'preconditions', label: 'Interruption / distraction', re: /\b(?:interrupted|interruption|distracted|distraction|called away|phone rang|bleep(?:ed)?|while answering)\b/i },
   { id: 'look-alike', layer: 'preconditions', label: 'Look-alike / sound-alike', re: /\b(?:look[- ]alike|sound[- ]alike|similar (?:packaging|labels?|names?|looking)|look(?:ed)? (?:very )?similar|same colou?r)\b/i },
   { id: 'device-ux', layer: 'preconditions', label: 'Confusing device interface', re: /\b(?:confusing (?:screen|display|interface|menu)|units? (?:confus|mix)|(?:shows?|displayed) [^.]{0,30} side by side|wrong unit field|ml(?:\/hr?)? (?:vs|instead of|versus) ml|decimal point|default (?:rate|setting)|keypad|scrolled past)\b/i },
-  { id: 'equipment-fault', layer: 'preconditions', label: 'Equipment fault', re: /\b(?:faulty|malfunction(?:ed|ing)?|broken|jammed|not working|battery (?:died|flat|low)|alarm (?:did not|didn'?t) (?:sound|go off)|out of service)\b/i },
+  { id: 'equipment-fault', layer: 'preconditions', label: 'Equipment fault', re: /\b(?:faulty|malfunction(?:ed|ing)?|broken|jammed|not working|battery (?:died|flat|low|was flat)|(?:flat|dead) battery|alarm (?:did not|didn'?t) (?:sound|go off)|out of service)\b/i },
   { id: 'alarm-off', layer: 'preconditions', label: 'Alarm off / not set', re: /\b(?:alarm (?:was )?(?:off|not (?:on|set|activated)|silenced|disabled)|not switched on)\b/i },
   { id: 'environment', layer: 'preconditions', label: 'Environment (lighting, noise, space)', re: /\b(?:poor lighting|dark|lights (?:off|dimmed)|noisy|cluttered|crowded|no space)\b/i },
   { id: 'batching', layer: 'preconditions', label: 'Batch processing', re: /\b(?:in (?:a )?batch|batched|printed (?:several|multiple|all)|labelled later|labels printed in advance|pre-?printed)\b/i },
   // Unsafe acts
   { id: 'wrong-rate', layer: 'acts', label: 'Wrong rate programmed', re: /\b(?:wrong rate|rate (?:was )?(?:set|programmed|entered) (?:at|to|as)|programmed (?:at|as) \d+|10 ?x|ten times)\b/i },
   { id: 'wrong-dose', layer: 'acts', label: 'Wrong dose / strength', re: /\b(?:wrong (?:dose|strength|concentration)|double (?:the )?dose|overdose|underdose|\d+ ?(?:mg|mmol|units?) instead of)\b/i },
-  { id: 'wrong-patient', layer: 'acts', label: 'Wrong patient', re: /\b(?:wrong patient|another patient'?s?|different patient|other patient'?s?)\b/i },
+  { id: 'wrong-patient', layer: 'acts', label: 'Wrong patient', re: /\b(?:wrong patient|another patient'?s?|different patient|other patient'?s?|(?:meant|intended) for (?:the|another|a different) patient|patient in the next bay)\b/i },
   { id: 'omission', layer: 'acts', label: 'Omitted / missed step', re: /\b(?:omitted|not given|missed (?:dose|step)|forgot(?:ten)?|was not (?:done|checked|given)|skipped)\b/i },
   { id: 'mislabel', layer: 'acts', label: 'Mislabelling', re: /\b(?:mislabell?ed|wrong label|labell?ed with (?:the )?(?:wrong|another)|unlabell?ed)\b/i },
 ];
 
 /** The slice that held: defences that caught the error. */
 export const DEFENCES = [
-  { id: 'double-check', label: 'Independent double check', re: /\b(?:double[- ]check(?:ed)?|second (?:nurse|check(?:er)?) (?:noticed|spotted|caught|queried)|independent check)\b/i },
+  { id: 'double-check', label: 'Independent double check', re: /\b(?:double[- ]check(?:ed)?|second (?:nurse|check(?:er)?) (?:noticed|spotted|caught|queried)|(?:second|independent) check[^.;]{0,30}(?:caught|spotted|noticed|picked up)|independent check|colleague (?:noticed|caught|spotted|queried))\b/i },
   { id: 'barcode', label: 'Barcode / scan check', re: /\b(?:barcode|scan(?:ner|ned)? (?:flagged|rejected|alerted|mismatch)|scanning)\b/i },
   { id: 'smart-pump', label: 'Smart-pump dose limit', re: /\b(?:dose limit|soft limit|hard limit|drug library|pump alarm(?:ed)?|pump (?:alerted|flagged|warned))\b/i },
   { id: 'pharmacist', label: 'Pharmacist review', re: /\bpharmacist (?:queried|noticed|spotted|caught|flagged|reviewed)\b/i },

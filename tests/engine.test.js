@@ -175,6 +175,18 @@ test('action impact compares equal windows before and after the first action', (
   assert.match(describeImpact(i), /2 similar reports in the 36 days since the first action, vs 2/);
 });
 
+test('negated phrases are not counted as factors or defences', () => {
+  const rec = (t) => buildRecord({ key: 'T-1', summary: 'pump rate', description: t });
+  assert.deepEqual(rec('Staff were not tired and there was no distraction.').factors, []);
+  const noCheck = rec('No double check was done before starting.');
+  assert.deepEqual(noCheck.factors, ['no-double-check']);
+  assert.deepEqual(noCheck.defences, [], 'an absent check must never count as a defence that held');
+  assert.ok(rec('Second nurse double-checked and caught it.').defences.includes('double-check'));
+  assert.ok(rec('I was tired at the end of a 12-hour shift.').factors.includes('fatigue'));
+  // Negation only reaches back within the same clause.
+  assert.ok(rec('No harm. I was interrupted by a bleep.').factors.includes('interruption'));
+});
+
 test('weekStart returns the Monday of the week', () => {
   assert.equal(weekStart('2026-11-19'), '2026-11-16');
   assert.equal(weekStart('2026-11-16'), '2026-11-16');

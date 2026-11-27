@@ -56,6 +56,8 @@ reads them side by side.
 - **Engine** (`src/engine/*`): pure JavaScript with no Forge imports, unit-tested with `node --test`.
 - **Surfaces**: the issue panel, dashboard and settings (UI Kit resolvers), and the Rovo actions,
   all call the same engine, so behaviour is identical everywhere.
+- **Scope**: only issues in configured safety projects are indexed or matched. On other projects
+  the panel says so, and re-indexing removes any stray records.
 - **Permissions**: user-facing results are filtered to issues the current user can open. Settings
   and demo data require the Jira `ADMINISTER` permission. Writes that a user triggers run as that user.
 
@@ -92,6 +94,34 @@ A report counts as "similar" at a score of 0.45 or more. A **signal** is a group
 
 Signals whose reports are a subset of a larger signal are merged into it. Both thresholds are
 admin settings.
+
+### Outcome levels
+
+Each report gets one outcome, following standard patient-safety levels:
+
+| Outcome | Meaning | Examples Slice recognises |
+|---|---|---|
+| `near-miss` | Caught before it reached the patient | "caught before it was given", "nearly given" |
+| `no-harm` | Reached the patient, no harm | "fell, no injury", "given 40 minutes late" |
+| `harm` | Reached the patient and caused harm | "small bruise", "developed bleeding", "needed naloxone" |
+| `severe-harm` | Severe harm or death | "cardiac arrest", "transferred to ICU" |
+
+Clinical findings are not harm ("an X-ray showing a fracture"), and a reporter's explicit "no harm"
+always overrides them.
+
+### Negation and shorthand
+
+A factor, defence or harm term only counts if no negation cue ("no", "not", "without", "denied"…)
+appears shortly before it in the same clause. So "staff were not tired" is not fatigue, and "no
+double check was done" is a missing check, never a defence that held. Common shorthand ("pt",
+"pts", "meds", "abx") is expanded before detection. The stored text is unchanged.
+
+### Accuracy
+
+A held-out evaluation set (`tests/eval-set.js`, 30 reports) is scored on every test run, and the
+build fails below 90% for category, location and outcome, below 85% for factor and defence
+recall, or on any negation error. Current results: category 97%, location 100%, outcome 100%,
+factors and defences 100%.
 
 ### Recommendation strength
 

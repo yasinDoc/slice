@@ -74,7 +74,9 @@ Slice turns Jira (or Jira Service Management) into a patient-safety learning sys
   reports the deployed app as eligible for Runs on Atlassian.
 - **Permission-aware.** Users only see reports they can already open in Jira. Settings and demo
   data are restricted to admins.
-- **Tests.** There are 39 tests: engine unit tests, Forge integration tests against mocked Jira,
+- **Measured accuracy.** On a held-out set of 30 differently worded reports: category 97%,
+  location 100%, outcome 100%, factors and defences 100%, and zero negation errors. CI enforces it.
+- **Tests.** There are 47 tests: engine unit tests, Forge integration tests against mocked Jira,
   Confluence and storage, and tests for the demo loader.
 
 ### Challenges
@@ -159,7 +161,7 @@ All data is synthetic. The devices (VitaFlow 300, LabelJet 2) are fictional.
 | 2:35 | Recommended fixes → Create action; dashboard → Publish brief → Confluence page | "Fixes ranked by strength. Hard limits beat more training. One click creates a linked task, and another publishes a brief for the safety committee in Confluence." |
 | 3:00 | Create a new report → 🧀 comment appears | "A nurse files a new near-miss. Slice recognises the pattern and says so, without blaming anyone." |
 | 3:30 | Dashboard: the pump card's Actions + "Did it work?" | "And Slice closes the loop: every action, its status, and whether the pattern recurs less once it's done." |
-| 3:50 | Architecture slide | "Forge and UI Kit across Jira and Confluence, plus a Rovo agent with seven actions for sites with Rovo. Runs on Atlassian, no patient identifiers stored, 39 tests." |
+| 3:50 | Architecture slide | "Forge and UI Kit across Jira and Confluence, plus a Rovo agent with seven actions for sites with Rovo. Runs on Atlassian, no patient identifiers stored, 47 tests, accuracy measured on held-out reports." |
 | 4:15 | Title card | "Slice. Connect the near-misses before the holes line up." |
 
 ---

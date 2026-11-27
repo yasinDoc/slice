@@ -18,6 +18,7 @@ A patient-safety learning app for Jira, Confluence and Rovo, built on Atlassian 
   <a href="#what-slice-does">Features</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#how-it-works">How it works</a> ·
+  <a href="#accuracy">Accuracy</a> ·
   <a href="docs/DESIGN.md">Design</a> ·
   <a href="PRIVACY.md">Privacy</a> ·
   <a href="docs/SUBMISSION.md">Codegeist kit</a>
@@ -51,7 +52,7 @@ report, works out which layers had holes, and tells you when the same holes keep
 | | |
 |---|---|
 | 🔒 **Redacts first** | Patient names, record numbers, dates of birth, phone numbers, emails and bed numbers are removed **before** anything is stored |
-| 🏷️ **Understands each report** | Category, ward, device model, drug, shift, outcome, contributing factors, and the defence that caught the error |
+| 🏷️ **Understands each report** | Category, ward, device model, drug, shift, outcome (near-miss, no-harm, harm), contributing factors, and the defence that caught the error. Understands negation ("staff were **not** tired") and clinical shorthand ("pt") |
 | 🧀 **Slices it** | Maps contributing factors onto Reason's four layers: organisation, supervision, preconditions, unsafe acts |
 | 🔗 **Connects the dots** | Explainable similarity (*"same device model · same ward · night shift"*) and automatic **signals** for recurring patterns |
 | 🔔 **Alerts in context** | When a new report joins a pattern, Slice comments on it once and labels it `slice-signal` |
@@ -123,6 +124,26 @@ report, works out which layers had holes, and tells you when the same holes keep
 
 Full details: [docs/DESIGN.md](docs/DESIGN.md) (data model, scoring, signal rules).
 
+## Accuracy
+
+Slice's extraction is measured on a **held-out evaluation set** ([`tests/eval-set.js`](tests/eval-set.js)):
+30 near-miss reports written independently of the demo data, in varied wording and shorthand, labelled
+the way a patient-safety reviewer would. CI fails if accuracy drops below the thresholds.
+
+| Measure | Result | Threshold |
+|---|---|---|
+| Incident category | **97%** | ≥ 90% |
+| Location | **100%** | ≥ 90% |
+| Outcome (near-miss / no-harm / harm) | **100%** | ≥ 90% |
+| Contributing factors and defences found | **100%** | ≥ 85% |
+| Negated phrases wrongly counted | **0** | must be 0 |
+
+Building the set found real weaknesses, and each one is now fixed: drug names did not count towards
+*medication*, *"no double check was done"* was read as a defence that held, *"a CT showing a bleed"*
+was read as harm to the patient, and falls without injury were not separated from near-misses.
+The one remaining disagreement (a misheard verbal order filed as *medication* rather than
+*communication*) is a judgement call, so the engine was left as it is rather than tuned to the test.
+
 ## Principles
 
 - **Blame-free.** Slice looks at systems, never individuals. It never ranks or names staff.
@@ -137,7 +158,7 @@ Requirements: **Node 22.3+** and, to deploy, the [Forge CLI](https://developer.a
 
 ```bash
 npm install
-npm test         # 39 tests: engine, Forge integration (mocked Jira, Confluence, KVS), demo loader
+npm test         # 47 tests: engine, held-out accuracy, Forge integration (mocked Jira, Confluence, KVS), demo loader
 npm run demo     # run the engine on the demo data offline: signals plus a sample RCA
 ```
 
@@ -182,7 +203,7 @@ src/demo-data.js        Synthetic reports and protocols (fictional devices, no r
 src/frontend/           index.jsx (panel), dashboard.jsx (project page), settings.jsx (admin)
 prompts/, skills/       Rovo agent prompt and RCA skill
 scripts/                demo.js (offline), seed.js and remove-duplicates.js (scripted setup)
-tests/                  engine, Forge integration and demo-loader tests
+tests/                  engine, held-out accuracy (eval-set.js), Forge integration and demo-loader tests
 ```
 
 </details>
@@ -193,8 +214,8 @@ tests/                  engine, Forge integration and demo-loader tests
   automated tests but were not demonstrated live. Everything else is verified on a live production install.
 - Redaction is pattern-based. It catches common identifiers but cannot guarantee every one, so local
   policy should still keep patient details out of near-miss reports.
-- The lexicon is English and tuned for the demo categories. Real deployments would extend it with
-  local terms, devices and drugs.
+- The lexicon is English. The held-out evaluation shows it generalises beyond the demo data, but
+  real deployments would still extend it with local terms, devices and drugs.
 - *Did it work?* compares simple counts over equal windows. It is a prompt for discussion, not a
   statistical test.
 

@@ -1,6 +1,6 @@
 // Product event handlers: index new or edited safety reports and raise signals.
-import { indexIssue, isSafetyProject } from './analysis.js';
-import { allRecords, getSettings, getAlert, saveAlert, deleteRecord } from './store.js';
+import { indexIssue, isSafetyProject, safetyRecords } from './analysis.js';
+import { getSettings, getAlert, saveAlert, deleteRecord } from './store.js';
 import { signalsForRecord } from './engine/index.js';
 import { addComment, addLabel } from './atlassian.js';
 
@@ -28,7 +28,7 @@ export async function onIssueEvent(event) {
   const settings = await getSettings();
   if (!settings.commentOnSignal) return;
 
-  const records = await allRecords();
+  const records = await safetyRecords();
   const [signal] = signalsForRecord(record, records, {
     windowDays: settings.windowDays,
     minSignalCount: settings.minSignalCount,

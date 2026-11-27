@@ -1,6 +1,6 @@
 // Resolver for the Jira issue panel (UI Kit).
 import ResolverPkg from '@forge/resolver';
-import { panelData, reindexAll, indexIssue, dashboardData, publishSignalBrief, isActionItem } from './analysis.js';
+import { panelData, reindexAll, indexIssue, dashboardData, publishSignalBrief, isActionItem, NotWatchedError, isSafetyProject } from './analysis.js';
 import { markNotRelated, getSettings, saveSettings, validateSettings, getActionItem } from './store.js';
 import { getIssue, isJiraAdmin } from './atlassian.js';
 import { createSafetyAction } from './actions.js';
@@ -19,12 +19,18 @@ resolver.define('getPanel', async (req) => {
     const item = await getActionItem(key);
     return { actionItem: true, from: item?.from || null, strength: item?.strength || null };
   }
-  return panelData(key);
+  try {
+    return await panelData(key);
+  } catch (e) {
+    if (e instanceof NotWatchedError) return { notWatched: true, projectKey: e.projectKey };
+    throw e;
+  }
 });
 
 resolver.define('refresh', async (req) => {
   const key = issueKey(req);
   await getIssue(key, { asUser: true });
+  if (!(await isSafetyProject(String(key).split('-')[0]))) return { notWatched: true, projectKey: String(key).split('-')[0] };
   await indexIssue(key);
   return panelData(key);
 });

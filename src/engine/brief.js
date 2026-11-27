@@ -92,7 +92,7 @@ export function buildSignalBrief(signal, records, opts = {}) {
     parts.push(
       `<tr><td>${esc(r.eventDate)}</td><td>${jiraLink(baseUrl, r.key)}</td><td>${esc(r.summary)}</td><td>${esc(catLabel(r.category))}</td><td>${status(
         r.outcome,
-        r.outcome === 'near-miss' ? 'Green' : 'Red'
+        r.outcome === 'near-miss' ? 'Green' : r.outcome === 'no-harm' ? 'Yellow' : 'Red'
       )}</td></tr>`
     );
   }

@@ -235,3 +235,26 @@ test('panel resolver returns signal, slices and protocols', async () => {
   });
   assert.equal((made?.body ?? made).linkedTo, 'SAFE-5');
 });
+
+test('issues outside safety projects are never indexed or matched', async () => {
+  issues.set('DEV-7', {
+    key: 'DEV-7',
+    fields: { summary: 'VitaFlow 300 pump rate wrong on Ward 6 at night', description: adf('Ward 6 night shift, VitaFlow 300 rate 10x'), created: '2026-11-20T00:00:00Z', project: { key: 'DEV' } },
+  });
+  const call = (functionKey, payload) => app.panelResolver({ call: { functionKey, payload }, context: {} }).then((r) => r?.body ?? r);
+  const panel = await call('getPanel', { issueKey: 'DEV-7' });
+  assert.equal(panel.notWatched, true);
+  assert.equal(panel.projectKey, 'DEV');
+  const refreshed = await call('refresh', { issueKey: 'DEV-7' });
+  assert.equal(refreshed.notWatched, true);
+  assert.ok(!store.has('report:DEV-7'), 'non-safety issue must not be stored');
+  const action = await app.findSimilarReports({ issueKey: 'DEV-7' });
+  assert.match(action.error, /not watching project DEV/);
+  // A stale record from another project is ignored in matching and removed on re-index.
+  store.set('report:DEV-8', { ...store.get('report:SAFE-5'), key: 'DEV-8', projectKey: 'DEV' });
+  const sims = await app.findSimilarReports({ issueKey: 'SAFE-5' });
+  assert.ok(!sims.similar.some((x) => x.key === 'DEV-8'));
+  await call('reindexAll', {});
+  assert.ok(!store.has('report:DEV-8'));
+  issues.delete('DEV-7');
+});

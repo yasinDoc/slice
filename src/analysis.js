@@ -61,12 +61,30 @@ export async function reindexAll() {
   const reports = issues.filter((i) => !isActionItem(i));
   for (const issue of reports) await saveRecord(recordFromIssue(issue));
   const live = new Set(reports.map((i) => i.key));
-  const stale = (await allRecords()).filter((r) => projectKeys.includes(r.projectKey) && !live.has(r.key));
+  // Drop records for deleted issues, and any record from a project that is not
+  // (or is no longer) a safety project.
+  const stale = (await allRecords()).filter((r) => !projectKeys.includes(r.projectKey) || !live.has(r.key));
   for (const r of stale) await deleteRecord(r.key);
   return reports.length;
 }
 
+/** Thrown when an issue is outside the configured safety projects. */
+export class NotWatchedError extends Error {
+  constructor(projectKey) {
+    super(`Slice is not watching project ${projectKey}. A Jira admin can add it in Slice settings.`);
+    this.projectKey = projectKey;
+  }
+}
+
+/** Only records from configured safety projects take part in matching and signals. */
+export async function safetyRecords() {
+  const { projectKeys } = await getSettings();
+  return (await allRecords()).filter((r) => projectKeys.includes(r.projectKey));
+}
+
 export async function ensureRecord(key) {
+  const projectKey = String(key).split('-')[0];
+  if (!(await isSafetyProject(projectKey))) throw new NotWatchedError(projectKey);
   const record = (await getRecord(key)) || (await indexIssue(key));
   if (!record) throw new Error(`${key} is a Slice action item, not a safety report.`);
   return record;
@@ -93,7 +111,7 @@ const brief = (r) => ({
 
 export async function similarFor(key, { limit = 8, checkVisibility = true } = {}) {
   const record = await ensureRecord(key);
-  const [records, feedback] = await Promise.all([allRecords(), getFeedback(key)]);
+  const [records, feedback] = await Promise.all([safetyRecords(), getFeedback(key)]);
   let matches = findSimilar(record, records, { limit: limit * 2, exclude: feedback.notRelated });
   if (checkVisibility) {
     const visible = new Set((await filterVisible(matches.map((m) => m.record))).map((r) => r.key));
@@ -104,7 +122,7 @@ export async function similarFor(key, { limit = 8, checkVisibility = true } = {}
 
 export async function signals({ location, category, days } = {}) {
   const settings = await getSettings();
-  const records = await allRecords();
+  const records = await safetyRecords();
   const today = new Date().toISOString().slice(0, 10);
   let list = detectSignals(records, {
     windowDays: days || settings.windowDays,
